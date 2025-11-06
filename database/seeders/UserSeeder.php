@@ -12,6 +12,7 @@ class UserSeeder extends Seeder
         $admin = User::factory()->create([
             'name' => 'Admin User',
             'email' => 'admin@bazaar.com',
+            'password' => bcrypt('admin')
         ]);
         $admin->assignRole('admin');
 
@@ -19,6 +20,7 @@ class UserSeeder extends Seeder
         $shopkeeper = User::factory()->create([
             'name' => 'Shopkeeper User',
             'email' => 'shop@bazaar.com',
+            'password' => bcrypt('shopkeeper')
         ]);
         $shopkeeper->assignRole('shopkeeper');
     }
