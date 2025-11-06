@@ -16,7 +16,7 @@ class UserSeeder extends Seeder
         ]);
         $admin->assignRole('admin');
 
-        // Create Shopkeeper User
+        // Create Shopkeeper Users
         $shopkeeper = User::factory()->create([
             'name' => 'Shopkeeper User',
             'email' => 'shop@bazaar.com',
