@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Bazaar Buddy')</title>
+    <title>@yield('title', 'Hamro-Pasal')</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -437,10 +437,10 @@
                         </a>
                         
                         <!-- Record Sale Button -->
-                        <a href="{{ route('sales.create') }}" class="metallic-btn-nav">
-                            <span class="mr-2">💰</span>
-                            Record Sale
-                        </a>
+                            <a href="{{ route('sales.create') }}" class="metallic-btn-nav">
+                                <span class="mr-2">💰</span>
+                                Record Sale
+                            </a>
                         
                         <!-- Categories Button (Role-based) -->
                         @if(auth()->user()->hasAnyRole(['admin', 'shopkeeper']))

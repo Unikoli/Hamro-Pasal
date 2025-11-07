@@ -14,7 +14,7 @@
                 <div class="mb-6">
                     <label for="name" class="block text-metallic-mid font-bold mb-3 text-lg">Category Name:</label>
                     <input type="text" name="name" id="name" value="{{ old('name') }}" 
-                           class="metallic-input shadow-lg appearance-none border rounded-lg w-full py-4 px-4 text-lg" 
+                           class="metallic-input shadow-lg appearance-none border rounded-lg w-full py-4 px-4 text-lg " 
                            placeholder="Enter category name..." required>
                     @error('name') 
                         <p class="text-red-400 text-sm mt-2 flex items-center">
