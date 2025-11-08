@@ -19,6 +19,8 @@ return new class extends Migration
             $table->decimal('price', 8, 2);
             $table->integer('current_stock')->default(0);
             $table->integer('reorder_level')->default(10);
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Who added the product
+            $table->boolean('is_global')->default(false); // If true, visible to all users
             $table->timestamps();
         });
     }
