@@ -4,26 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Sale;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // Calculate dashboard statistics
+        // === Existing Statistics ===
         $totalProducts = Product::count();
         $totalSales = $this->getTotalSalesRevenue();
         $todaySales = $this->getTodaySalesRevenue();
         $lowStockProducts = Product::where('current_stock', '<=', DB::raw('reorder_level'))->count();
-        
-        // Get chart data
+
+        // === Chart Data ===
         $monthlySalesData = $this->getMonthlySalesData();
         $dailySalesData = $this->getDailySalesData();
-        
-        // Get recent sales with product information
+
+        // === Recent Sales ===
         $recentSales = Sale::with(['product', 'user'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
@@ -39,8 +39,8 @@ class DashboardController extends Controller
                     'created_at' => $sale->created_at->format('M d, Y H:i'),
                 ];
             });
-        
-        // Get top performing products
+
+        // === Top Products ===
         $topProducts = DB::table('sales')
             ->join('products', 'sales.product_id', '=', 'products.id')
             ->select(
@@ -52,8 +52,8 @@ class DashboardController extends Controller
             ->orderBy('total_revenue', 'desc')
             ->limit(5)
             ->get();
-        
-        // Get low stock alerts
+
+        // === Low Stock Alerts ===
         $lowStockAlerts = Product::with(['category', 'supplier'])
             ->where('current_stock', '<=', DB::raw('reorder_level'))
             ->orderBy('current_stock', 'asc')
@@ -70,6 +70,10 @@ class DashboardController extends Controller
                 ];
             });
 
+        // === 🔮 Forecast API Integration ===
+        $forecastValue = $this->getForecastValue();
+
+        // === Return Data to View ===
         return view('dashboard', compact(
             'totalProducts',
             'totalSales',
@@ -79,8 +83,45 @@ class DashboardController extends Controller
             'dailySalesData',
             'recentSales',
             'topProducts',
-            'lowStockAlerts'
+            'lowStockAlerts',
+            'forecastValue'
         ));
+    }
+
+    /**
+     * 🔮 Send sales data to FastAPI to get forecasted sales
+     */
+    private function getForecastValue()
+    {
+        try {
+            // Get last 30 days of sales data
+            $salesData = Sale::where('created_at', '>=', now()->subDays(30))
+                ->select('created_at as date', 'quantity')
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->map(function ($sale) {
+                    return [
+                        // 'date' => $sale->date->format('Y-m-d'),
+                        'date' => Carbon::parse($sale->date)->format('Y-m-d'),
+
+                        'quantity' => $sale->quantity,
+                    ];
+                });
+
+            // Send data to FastAPI
+            $response = Http::post('http://127.0.0.1:8001/forecast', [
+                'sales' => $salesData,
+            ]);
+
+            // Parse response
+            
+            $data = $response->json();
+            return $data['Forecast'] ?? 0;
+        } catch (\Exception $e) {
+            // Log error (optional)
+            \Log::error('Forecast API error: ' . $e->getMessage());
+            return 0;
+        }
     }
 
     private function getTotalSalesRevenue()
@@ -120,16 +161,12 @@ class DashboardController extends Controller
         $revenues = [];
         $quantities = [];
 
-        // Generate all months in the range
         $current = $startDate->copy();
         while ($current <= $endDate) {
             $monthKey = $current->format('Y-m');
-            $monthLabel = $current->format('M Y');
-            
-            $months[] = $monthLabel;
+            $months[] = $current->format('M Y');
             $revenues[] = $salesData->get($monthKey)->total_revenue ?? 0;
             $quantities[] = $salesData->get($monthKey)->total_quantity ?? 0;
-            
             $current->addMonth();
         }
 
@@ -162,16 +199,12 @@ class DashboardController extends Controller
         $revenues = [];
         $quantities = [];
 
-        // Generate all dates in the range
         $current = $startDate->copy();
         while ($current <= $endDate) {
             $dateKey = $current->format('Y-m-d');
-            $dateLabel = $current->format('M j');
-            
-            $dates[] = $dateLabel;
+            $dates[] = $current->format('M j');
             $revenues[] = $salesData->get($dateKey)->total_revenue ?? 0;
             $quantities[] = $salesData->get($dateKey)->total_quantity ?? 0;
-            
             $current->addDay();
         }
 

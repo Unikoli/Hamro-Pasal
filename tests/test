@@ -1,257 +1,184 @@
+<?php
 
+namespace App\Http\Controllers;
 
+use App\Models\Product;
+use App\Models\Sale;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
+class DashboardController extends Controller
+{
+    public function index()
+    {
+        // Calculate dashboard statistics
+        $totalProducts = Product::count();
+        $totalSales = $this->getTotalSalesRevenue();
+        $todaySales = $this->getTodaySalesRevenue();
+        $lowStockProducts = Product::where('current_stock', '<=', DB::raw('reorder_level'))->count();
+        
+        // Get chart data
+        $monthlySalesData = $this->getMonthlySalesData();
+        $dailySalesData = $this->getDailySalesData();
+        
+        // Get recent sales with product information
+        $recentSales = Sale::with(['product', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function ($sale) {
+                return [
+                    'id' => $sale->id,
+                    'product_name' => $sale->product->name,
+                    'quantity' => $sale->quantity,
+                    'unit_price' => $sale->product->price,
+                    'total_amount' => $sale->quantity * $sale->product->price,
+                    'user_name' => $sale->user->name,
+                    'created_at' => $sale->created_at->format('M d, Y H:i'),
+                ];
+            });
+        
+        // Get top performing products
+        $topProducts = DB::table('sales')
+            ->join('products', 'sales.product_id', '=', 'products.id')
+            ->select(
+                'products.name',
+                DB::raw('SUM(sales.quantity) as total_quantity'),
+                DB::raw('SUM(sales.quantity * products.price) as total_revenue')
+            )
+            ->groupBy('products.id', 'products.name')
+            ->orderBy('total_revenue', 'desc')
+            ->limit(5)
+            ->get();
+        
+        // Get low stock alerts
+        $lowStockAlerts = Product::with(['category', 'supplier'])
+            ->where('current_stock', '<=', DB::raw('reorder_level'))
+            ->orderBy('current_stock', 'asc')
+            ->limit(5)
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'current_stock' => $product->current_stock,
+                    'reorder_level' => $product->reorder_level,
+                    'category' => $product->category->name ?? 'N/A',
+                    'supplier' => $product->supplier->name ?? 'N/A',
+                ];
+            });
 
-@extends('layouts.app')
+        return view('dashboard', compact(
+            'totalProducts',
+            'totalSales',
+            'todaySales',
+            'lowStockProducts',
+            'monthlySalesData',
+            'dailySalesData',
+            'recentSales',
+            'topProducts',
+            'lowStockAlerts'
+        ));
+    }
 
-@section('content')
-<div class="container mx-auto px-4 py-10 text-white">
-    <!-- Page Header -->
-    <div class="text-center mb-12 animate-fadeInUp">
-        <h1 class="text-5xl font-orbitron metallic-text tracking-widest drop-shadow-lg mb-3">DASHBOARD</h1>
-        <p class="text-metallic-mid text-sm uppercase tracking-wide">Real-time overview of your inventory system</p>
-    </div>
+    private function getTotalSalesRevenue()
+    {
+        return DB::table('sales')
+            ->join('products', 'sales.product_id', '=', 'products.id')
+            ->sum(DB::raw('sales.quantity * products.price'));
+    }
 
-    <!-- Statistic Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        @foreach([
-            ['label'=>'Total Products','value'=>number_format($totalProducts),'color'=>'blue','icon'=>'📦'],
-            ['label'=>'Total Sales','value'=>'Rs.'.number_format($totalSales,2),'color'=>'yellow','icon'=>'💰'],
-            ['label'=>"Today's Sales",'value'=>'Rs.'.number_format($todaySales,2),'color'=>'green','icon'=>'📈'],
-            ['label'=>'Low Stock Items','value'=>$lowStockProducts,'color'=>'red','icon'=>'⚠️']
-        ] as $stat)
-        <div class="metallic-card p-6 group hover:scale-105 hover:shadow-lg transition-all duration-500">
-            <div class="flex justify-between items-center">
-                <div>
-                    <p class="text-metallic-mid text-sm">{{ $stat['label'] }}</p>
-                    <p class="text-3xl font-bold text-white group-hover:text-metallic-gold">{{ $stat['value'] }}</p>
-                </div>
-                <div class="p-3 rounded-full bg-{{ $stat['color'] }}-500/20">
-                    <span class="text-2xl">{{ $stat['icon'] }}</span>
-                </div>
-            </div>
-        </div>
-        @endforeach
-    </div>
+    private function getTodaySalesRevenue()
+    {
+        return DB::table('sales')
+            ->join('products', 'sales.product_id', '=', 'products.id')
+            ->whereDate('sales.created_at', Carbon::today())
+            ->sum(DB::raw('sales.quantity * products.price'));
+    }
 
-    <!-- Chart and Top Products -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-        <div class="lg:col-span-2 metallic-card p-6">
-            <div class="flex justify-between items-center mb-4">
-                <div>
-                    <h3 class="text-xl font-bold text-metallic-mid mb-1">Sales Performance</h3>
-                    <p class="text-sm text-gray-400">Track trends over time</p>
-                </div>
-                <div class="flex space-x-2">
-                    <button id="monthlyViewBtn" class="chart-toggle-btn active px-4 py-1.5 rounded-lg">Monthly</button>
-                    <button id="dailyViewBtn" class="chart-toggle-btn px-4 py-1.5 rounded-lg">Daily</button>
-                </div>
-            </div>
-            <div class="relative h-[400px]">
-                <canvas id="salesChart"></canvas>
-            </div>
-        </div>
+    private function getMonthlySalesData()
+    {
+        $startDate = Carbon::now()->subMonths(11)->startOfMonth();
+        $endDate = Carbon::now()->endOfMonth();
 
-        <!-- Top Products -->
-        <div class="metallic-card p-6 overflow-hidden">
-            <h3 class="text-xl font-bold text-metallic-mid mb-4">Top Products</h3>
-            <div class="space-y-3">
-                @forelse($topProducts as $product)
-                    <div class="p-3 bg-gray-800/40 hover:bg-gray-700/30 rounded-lg flex justify-between items-center transition-all">
-                        <div>
-                            <p class="font-medium">{{ $product->name }}</p>
-                            <p class="text-xs text-gray-400">{{ $product->total_quantity }} sold</p>
-                        </div>
-                        <p class="text-metallic-gold font-semibold">Rs.{{ number_format($product->total_revenue,2) }}</p>
-                    </div>
-                @empty
-                    <p class="text-gray-400 text-center">No sales data</p>
-                @endforelse
-            </div>
-        </div>
-    </div>
+        $salesData = DB::table('sales')
+            ->join('products', 'sales.product_id', '=', 'products.id')
+            ->select(
+                DB::raw('DATE_FORMAT(sales.created_at, "%Y-%m") as month'),
+                DB::raw('SUM(sales.quantity * products.price) as total_revenue'),
+                DB::raw('SUM(sales.quantity) as total_quantity')
+            )
+            ->whereBetween('sales.created_at', [$startDate, $endDate])
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get()
+            ->keyBy('month');
 
-    <!-- Recent Sales & Alerts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Recent Sales -->
-        <div class="metallic-card p-6">
-            <h3 class="text-xl font-bold text-metallic-mid mb-4">Recent Sales</h3>
-            <div class="space-y-3">
-                @forelse($recentSales as $sale)
-                    <div class="p-3 bg-gray-800/40 hover:bg-gray-700/30 rounded-lg transition-all">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="font-medium">{{ $sale['product_name'] }}</p>
-                                <p class="text-xs text-gray-400">
-                                    {{ $sale['quantity'] }} × Rs.{{ number_format($sale['unit_price'],2) }} • {{ $sale['user_name'] }}
-                                </p>
-                                <p class="text-[11px] text-gray-500">{{ $sale['created_at'] }}</p>
-                            </div>
-                            <p class="text-metallic-gold font-semibold">Rs.{{ number_format($sale['total_amount'],2) }}</p>
-                        </div>
-                    </div>
-                @empty
-                    <p class="text-gray-400 text-center py-4">No recent sales</p>
-                @endforelse
-            </div>
-        </div>
+        $months = [];
+        $revenues = [];
+        $quantities = [];
 
-        <!-- Low Stock Alerts -->
-        <div class="metallic-card p-6">
-            <h3 class="text-xl font-bold text-metallic-mid mb-4">Low Stock Alerts</h3>
-            <div class="space-y-3">
-                @forelse($lowStockAlerts as $product)
-                    <div class="p-3 border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all flex justify-between items-center">
-                        <div>
-                            <p class="font-medium">{{ $product['name'] }}</p>
-                            <p class="text-xs text-gray-400">{{ $product['category'] }} • {{ $product['supplier'] }}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-red-400 font-semibold">{{ $product['current_stock'] }}</p>
-                            <p class="text-xs text-gray-400">Min: {{ $product['reorder_level'] }}</p>
-                        </div>
-                    </div>
-                @empty
-                    <p class="text-gray-400 text-center py-4">All products are well stocked</p>
-                @endforelse
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Keep your existing chart.js code (works perfectly)
-   
-document.addEventListener('DOMContentLoaded', function() {
-    // Chart.js configuration
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    
-    // Monthly data from controller
-    const monthlyData = {
-        labels: @json($monthlySalesData['labels']),
-        revenues: @json($monthlySalesData['revenues']),
-        quantities: @json($monthlySalesData['quantities'])
-    };
-    
-    // Daily data from controller
-    const dailyData = {
-        labels: @json($dailySalesData['labels']),
-        revenues: @json($dailySalesData['revenues']),
-        quantities: @json($dailySalesData['quantities'])
-    };
-    
-    // Chart configuration with metallic theme
-    const chartConfig = {
-        type: 'line',
-        data: {
-            labels: monthlyData.labels,
-            datasets: [{
-                label: 'Revenue ($)',
-                data: monthlyData.revenues,
-                borderColor: '#d4af37',
-                backgroundColor: 'rgba(212, 175, 55, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#d4af37',
-                pointBorderColor: '#d4af37',
-                pointRadius: 6,
-                pointHoverRadius: 8,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: '#c5d1d5',
-                        font: {
-                            family: 'Roboto',
-                            size: 12
-                        }
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(45, 55, 72, 0.95)',
-                    titleColor: '#d4af37',
-                    bodyColor: '#c5d1d5',
-                    borderColor: '#d4af37',
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function(context) {
-                            return 'Revenue: Rs.' + context.parsed.y.toLocaleString();
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: {
-                        color: 'rgba(197, 209, 213, 0.1)',
-                        borderColor: 'rgba(197, 209, 213, 0.3)'
-                    },
-                    ticks: {
-                        color: '#c5d1d5',
-                        font: {
-                            family: 'Roboto',
-                            size: 11
-                        }
-                    }
-                },
-                y: {
-                    grid: {
-                        color: 'rgba(197, 209, 213, 0.1)',
-                        borderColor: 'rgba(197, 209, 213, 0.3)'
-                    },
-                    ticks: {
-                        color: '#c5d1d5',
-                        font: {
-                            family: 'Roboto',
-                            size: 11
-                        },
-                        callback: function(value) {
-                            return 'Rs.' + value.toLocaleString();
-                        }
-                    }
-                }
-            },
-            interaction: {
-                intersect: false,
-                mode: 'index'
-            }
+        // Generate all months in the range
+        $current = $startDate->copy();
+        while ($current <= $endDate) {
+            $monthKey = $current->format('Y-m');
+            $monthLabel = $current->format('M Y');
+            
+            $months[] = $monthLabel;
+            $revenues[] = $salesData->get($monthKey)->total_revenue ?? 0;
+            $quantities[] = $salesData->get($monthKey)->total_quantity ?? 0;
+            
+            $current->addMonth();
         }
-    };
-    
-    // Initialize chart
-    const salesChart = new Chart(ctx, chartConfig);
-    
-    // View switching functionality
-    const monthlyBtn = document.getElementById('monthlyViewBtn');
-    const dailyBtn = document.getElementById('dailyViewBtn');
-    
-    monthlyBtn.addEventListener('click', function() {
-        updateChart(monthlyData, 'Monthly');
-        setActiveButton(monthlyBtn, dailyBtn);
-    });
-    
-    dailyBtn.addEventListener('click', function() {
-        updateChart(dailyData, 'Daily');
-        setActiveButton(dailyBtn, monthlyBtn);
-    });
-    
-    function updateChart(data, period) {
-        salesChart.data.labels = data.labels;
-        salesChart.data.datasets[0].data = data.revenues;
-        salesChart.data.datasets[0].label = 'Revenue (Rs.) - ' + period;
-        salesChart.update('resize');
-    }
-    
-    function setActiveButton(activeBtn, inactiveBtn) {
-        activeBtn.classList.add('active');
-        inactiveBtn.classList.remove('active');
-    }
-});
-</script>
 
-@endsection
+        return [
+            'labels' => $months,
+            'revenues' => $revenues,
+            'quantities' => $quantities,
+        ];
+    }
+
+    private function getDailySalesData()
+    {
+        $startDate = Carbon::now()->subDays(29)->startOfDay();
+        $endDate = Carbon::now()->endOfDay();
+
+        $salesData = DB::table('sales')
+            ->join('products', 'sales.product_id', '=', 'products.id')
+            ->select(
+                DB::raw('DATE(sales.created_at) as date'),
+                DB::raw('SUM(sales.quantity * products.price) as total_revenue'),
+                DB::raw('SUM(sales.quantity) as total_quantity')
+            )
+            ->whereBetween('sales.created_at', [$startDate, $endDate])
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        $dates = [];
+        $revenues = [];
+        $quantities = [];
+
+        // Generate all dates in the range
+        $current = $startDate->copy();
+        while ($current <= $endDate) {
+            $dateKey = $current->format('Y-m-d');
+            $dateLabel = $current->format('M j');
+            
+            $dates[] = $dateLabel;
+            $revenues[] = $salesData->get($dateKey)->total_revenue ?? 0;
+            $quantities[] = $salesData->get($dateKey)->total_quantity ?? 0;
+            
+            $current->addDay();
+        }
+
+        return [
+            'labels' => $dates,
+            'revenues' => $revenues,
+            'quantities' => $quantities,
+        ];
+    }
+}
