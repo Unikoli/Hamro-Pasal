@@ -39,7 +39,7 @@
                     </a>
                     @endcan
                     @can('manage categories')
-                     @if (auth()->user()->hasAnyRole(['admin', 'shopkeeper']))
+                     <!-- @if (auth()->user()->hasAnyRole(['admin', 'shopkeeper'])) -->
 
                    
                     <a href="{{ route('admin.categories.index') }}"
@@ -49,7 +49,7 @@
                         </svg>
                         CATEGORIES
                     </a>
-                     @endif
+                     <!-- @endif -->
                     @endcan
 
                     @can('manage sales')

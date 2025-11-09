@@ -50,6 +50,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Sale;
+use App\Notifications\LowStockNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -92,6 +93,13 @@ class SaleController extends Controller
                 ]);
 
                 $product->decrement('current_stock', $validated['quantity']);
+                 // Reload product instance with latest stock
+                $product->refresh();
+
+                // 🔥 If stock is low, send a mail notification to the logged-in user
+                if ($product->current_stock < 10) {
+                    Auth::user()->notify(new LowStockNotification($product));
+                }
             });
 
         } catch (\Exception $e) {

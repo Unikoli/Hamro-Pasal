@@ -23,7 +23,7 @@ class CategoryAccessMiddleware
         }
 
         // Check if user has admin or shopkeeper role
-        if (!auth()->user()->hasAnyRole(['admin', 'shopkeeper'])) {
+        if (!auth()->user()->hasAnyRole(['Admin User', 'shopkeeper'])) {
             abort(403, 'Access denied. Admin or Shopkeeper role required.');
         }
 
