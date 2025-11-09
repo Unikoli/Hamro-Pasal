@@ -17,7 +17,7 @@
         <div>
             <label for="category_id" class="block text-metallic-mid font-bold mb-3 text-lg">Category:</label>
             <select name="category_id" id="category_id" 
-                    class="metallic-input shadow-lg border rounded-lg w-full py-4 px-4 text-lg" required>
+                    class="metallic-input shadow-lg border rounded-lg w-full py-4 px-4 text-lg  bg-slate-800" required>
                 <option value="">-- Select Category --</option>
                 @foreach($categories as $category)
                     <option value="{{ $category->id }}" @selected(old('category_id', $product->category_id ?? '') == $category->id)>
@@ -35,7 +35,7 @@
         <div>
             <label for="supplier_id" class="block text-metallic-mid font-bold mb-3 text-lg">Supplier:</label>
             <select name="supplier_id" id="supplier_id" 
-                    class="metallic-input shadow-lg border rounded-lg w-full py-4 px-4 text-lg" required>
+                    class="metallic-input shadow-lg border rounded-lg w-full py-4 px-4 text-lg bg-slate-800" required>
                 <option value="">-- Select Supplier --</option>
                 @foreach($suppliers as $supplier)
                     <option value="{{ $supplier->id }}" @selected(old('supplier_id', $product->supplier_id ?? '') == $supplier->id)>

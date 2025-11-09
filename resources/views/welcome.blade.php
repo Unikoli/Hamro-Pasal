@@ -1,183 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bazaar Buddy - Inventory Management</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        metallic: {
-                            light: '#eef2f3',
-                            mid: '#c5d1d5',
-                            dark: '#8a9ea5',
-                            gold: '#d4af37',
-                        },
-                        steel: {
-                            100: '#f0f4f5',
-                            800: '#2d3748',
-                            900: '#1a202c',
-                        }
-                    },
-                    boxShadow: {
-                        'metallic': '0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.3)',
-                        'metallic-btn': '0 5px 15px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.3)',
-                    }
-                }
-            }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hamro Pasal - Inventory Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1a1a2e',
+            accent: '#d4af37',
+            secondary: '#0f172a',
+            light: '#f1f5f9',
+            grayish: '#cbd5e1',
+          },
+          boxShadow: {
+            glow: '0 0 25px rgba(212,175,55,0.3)',
+          },
+          fontFamily: {
+            orbitron: ['Orbitron', 'sans-serif'],
+            roboto: ['Roboto', 'sans-serif'],
+          },
         }
-    </script>
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #2c3e50 0%, #1a1a2e 100%);
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-        }
-        
-        body::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.1) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.1) 0%, transparent 20%);
-            z-index: -1;
-        }
-        
-        .metallic-text {
-            background: linear-gradient(to bottom, #eef2f3, #8a9ea5);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-        
-        .logo-container {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .logo-container::after {
-            content: "";
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            right: -10px;
-            bottom: -10px;
-            background: linear-gradient(145deg, #1a202c, #2d3748);
-            border-radius: 50%;
-            z-index: -1;
-            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
-        }
-        
-        .metallic-btn {
-            background: linear-gradient(145deg, #3a4758, #2a3444);
-            border: 2px solid;
-            border-image: linear-gradient(to bottom, #d4af37, #8e6d28) 1;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .metallic-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-        }
-        
-        .metallic-btn::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: 0.5s;
-        }
-        
-        .metallic-btn:hover::before {
-            left: 100%;
-        }
-        
-        .pulse {
-            animation: pulse 3s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.03); }
-            100% { transform: scale(1); }
-        }
-    </style>
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: radial-gradient(circle at top right, #2b2b40, #0f172a 80%);
+      color: #f8fafc;
+      overflow-x: hidden;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .shine:hover {
+      background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+      transition: all 0.4s ease;
+    }
+    .gradient-text {
+      background: linear-gradient(to right, #f1f5f9, #d4af37);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+  </style>
 </head>
-<body class="text-gray-100 flex items-center justify-center">
-    <div class="container mx-auto px-4 py-12 flex flex-col items-center">
-        <!-- Main Logo -->
-        <div class="logo-container pulse mb-8">
-            <div class="bg-gradient-to-br from-metallic.light via-metallic.mid to-metallic.dark rounded-full p-8 shadow-metallic">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-40 w-40" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#1a202c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M2 17L12 22L22 17" stroke="#1a202c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M2 12L12 17L22 12" stroke="#1a202c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M12 12V17" stroke="#1a202c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </div>
-        </div>
-        
-        <!-- App Name -->
-        <h1 class="text-6xl md:text-7xl font-bold mb-6 metallic-text font-orbitron tracking-tighter">
-            HAMRO PASAL
-        </h1>
-        
-        <!-- Tagline -->
-        <p class="text-xl text-metallic.mid mb-12 max-w-2xl text-center font-light tracking-wide">
-            INDUSTRIAL-GRADE INVENTORY MANAGEMENT FOR MODERN RETAIL
-        </p>
-        
-        <!-- Action Buttons -->
-        <div class="flex flex-col sm:flex-row gap-6 mb-16">
-            <a href="{{ route('login') }}" class="metallic-btn px-10 py-4 text-lg font-bold rounded-lg text-metallic.light hover:text-white transition-colors duration-300">
-                LOG IN
-            </a>
-            <a href="{{ route('register') }}" class="metallic-btn px-10 py-4 text-lg font-bold rounded-lg bg-gradient-to-r from-metallic.gold/20 to-metallic.gold/10 text-metallic.gold border-metallic.gold hover:text-yellow-200 transition-colors duration-300">
-                REGISTER
-            </a>
-        </div>
-        
-        <!-- Feature Highlights -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mt-8">
-            <div class="bg-steel-800/50 backdrop-blur-sm p-6 rounded-xl border border-steel-700">
-                <div class="text-metallic.gold text-3xl mb-4">📊</div>
-                <h3 class="text-xl font-bold text-metallic.mid mb-2">Real-Time Analytics</h3>
-                <p class="text-steel-100">Track sales, inventory levels, and trends with precision.</p>
-            </div>
-            
-            <div class="bg-steel-800/50 backdrop-blur-sm p-6 rounded-xl border border-steel-700">
-                <div class="text-metallic.gold text-3xl mb-4">🤖</div>
-                <h3 class="text-xl font-bold text-metallic.mid mb-2">AI Forecasting</h3>
-                <p class="text-steel-100">Predict demand and optimize stock with machine learning.</p>
-            </div>
-            
-            <div class="bg-steel-800/50 backdrop-blur-sm p-6 rounded-xl border border-steel-700">
-                <div class="text-metallic.gold text-3xl mb-4">🔔</div>
-                <h3 class="text-xl font-bold text-metallic.mid mb-2">Smart Alerts</h3>
-                <p class="text-steel-100">Get notified about low stock, anomalies, and opportunities.</p>
-            </div>
-        </div>
-        
-        <!-- Footer -->
-        <div class="mt-16 text-center text-steel-100 text-sm">
-            <p>© {{ date('Y') }} Hamro Pasal. All rights reserved.</p>
-        </div>
+<body class="flex flex-col min-h-screen">
+
+  <!-- Header -->
+  <header class="w-full py-6 px-10 flex justify-between items-center backdrop-blur-lg bg-primary/60 border-b border-gray-700 fixed top-0 z-40">
+    <h1 class="text-3xl font-orbitron text-accent tracking-wider">Hamro Pasal</h1>
+    <div class="flex gap-4">
+      <a href="{{ route('login') }}" class="px-6 py-2 rounded-md border border-accent text-accent hover:bg-accent hover:text-primary font-medium transition-all">Log In</a>
+      <a href="{{ route('register') }}" class="px-6 py-2 rounded-md bg-accent text-primary font-medium hover:bg-yellow-400 transition-all">Register</a>
     </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="flex flex-col-reverse md:flex-row justify-between items-center w-full px-10 mt-32 md:mt-40 max-w-7xl mx-auto">
+    <div class="md:w-1/2 text-center md:text-left">
+      <h2 class="text-5xl md:text-6xl font-bold mb-6 font-orbitron gradient-text">Industrial-Grade Inventory Management</h2>
+      <p class="text-grayish text-lg mb-8 leading-relaxed">Revolutionizing retail management with AI-powered analytics, smart alerts, and seamless forecasting tools — built for efficiency and accuracy.</p>
+      <div class="flex gap-4 justify-center md:justify-start">
+        <a href="{{ route('login') }}" class="px-8 py-3 rounded-lg bg-accent text-primary font-bold hover:bg-yellow-400 transition-all">Get Started</a>
+        <a href="#features" class="px-8 py-3 rounded-lg border border-accent text-accent font-bold hover:bg-accent hover:text-primary transition-all">Learn More</a>
+      </div>
+    </div>
+
+    <div class="md:w-1/2 flex justify-center md:justify-end mb-12 md:mb-0">
+      <div class="relative">
+        <div class="absolute inset-0 bg-accent/20 blur-3xl rounded-full animate-pulse"></div>
+        <div class="bg-gradient-to-br from-accent/40 to-primary/40 rounded-full p-8 shadow-glow">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-56 w-56" fill="none" viewBox="0 0 24 24" stroke="#f1f5f9" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2 12l10 5 10-5" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2 17l10 5 10-5" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="mt-32 px-8 md:px-16 lg:px-32 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
+    <div class="glass p-8 rounded-xl hover:shadow-glow transition-all">
+      <div class="text-4xl text-accent mb-4">📊</div>
+      <h3 class="text-2xl font-semibold mb-2">Real-Time Analytics</h3>
+      <p class="text-grayish leading-relaxed">Get up-to-the-minute insights on your sales, stock, and performance with interactive dashboards.</p>
+    </div>
+    <div class="glass p-8 rounded-xl hover:shadow-glow transition-all">
+      <div class="text-4xl text-accent mb-4">🤖</div>
+      <h3 class="text-2xl font-semibold mb-2">AI Forecasting</h3>
+      <p class="text-grayish leading-relaxed">Use advanced machine learning algorithms to anticipate demand and prevent stockouts.</p>
+    </div>
+    <div class="glass p-8 rounded-xl hover:shadow-glow transition-all">
+      <div class="text-4xl text-accent mb-4">🔔</div>
+      <h3 class="text-2xl font-semibold mb-2">Smart Alerts</h3>
+      <p class="text-grayish leading-relaxed">Stay informed with intelligent alerts about low inventory, pricing trends, and anomalies.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="mt-24 py-10 text-center border-t border-gray-700 text-grayish">
+    <p>© {{ date('Y') }} <span class="text-accent font-semibold">Hamro Pasal</span>. All rights reserved.</p>
+  </footer>
+
 </body>
 </html>

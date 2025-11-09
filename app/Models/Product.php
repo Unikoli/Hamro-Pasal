@@ -10,7 +10,7 @@ class Product extends Model
 
     protected $fillable = [
         'name', 'category_id', 'supplier_id', 
-        'price', 'current_stock', 'reorder_level'
+        'price', 'current_stock', 'reorder_level','user_id', 'is_global'
     ];
 
     public function category() {
@@ -24,4 +24,15 @@ class Product extends Model
     public function sales() {
         return $this->hasMany(Sale::class);
     }
+
+     public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    public function scopeVisibleTo($query, $user)
+{
+    return $query->where('is_global', true)
+                 ->orWhere('user_id', $user->id);
+}
+
 }
