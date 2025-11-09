@@ -135,7 +135,7 @@
         
         <!-- App Name -->
         <h1 class="text-6xl md:text-7xl font-bold mb-6 metallic-text font-orbitron tracking-tighter">
-            BAZAAR BUDDY
+            HAMRO PASAL
         </h1>
         
         <!-- Tagline -->
@@ -176,7 +176,7 @@
         
         <!-- Footer -->
         <div class="mt-16 text-center text-steel-100 text-sm">
-            <p>© {{ date('Y') }} Bazaar Buddy. All rights reserved.</p>
+            <p>© {{ date('Y') }} Hamro Pasal. All rights reserved.</p>
         </div>
     </div>
 </body>
