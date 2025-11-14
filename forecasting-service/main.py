@@ -167,7 +167,7 @@ import pandas as pd
 # === Constants ===
 FORECASTING_WINDOW_DAYS = 28
 PROJECTION_DAYS = 7
-MINIMUM_DATA_POINTS = 3
+MINIMUM_DATA_POINTS = 2
 
 # === App Setup ===
 app = FastAPI(

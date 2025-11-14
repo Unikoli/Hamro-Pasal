@@ -4,25 +4,38 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Sale extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'product_id',
-        'user_id',
-        'quantity'
+        'customer_id',
+        'total_amount',
+        'discount',
+        'tax',
+        'payment_method',
+        'sale_date',
     ];
 
-    public function product(): BelongsTo
+    public function customer()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Customer::class);
     }
 
-    public function user(): BelongsTo
+    public function items()
     {
-        return $this->belongsTo(User::class);
+        return $this->hasMany(SaleItem::class);
+    }
+
+    // Accessor for final total after discount and tax
+    public function getFinalAmountAttribute()
+    {
+        return ($this->total_amount - $this->discount) + $this->tax;
+    }
+     // Relationship with sale items
+    public function saleItems()
+    {
+        return $this->hasMany(SaleItem::class);
     }
 }

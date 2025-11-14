@@ -15,7 +15,11 @@
                 <table class="metallic-table min-w-full rounded-lg overflow-hidden">
                     <thead>
                         <tr>
-                            <th class="px-8 py-4 text-left text-lg font-bold">SUPPLIER NAME</th>
+                            <th class="px-8 py-4 text-left text-lg font-bold"> Name</th>
+                            <th class="px-8 py-4 text-left text-lg font-bold">Company</th>
+                            <th class="px-8 py-4 text-left text-lg font-bold">Contact</th>
+                            <th class="px-8 py-4 text-left text-lg font-bold">Email</th>
+                            <th class="px-8 py-4 text-left text-lg font-bold">Address</th>
                             <th class="px-8 py-4 text-center text-lg font-bold">ACTIONS</th>
                         </tr>
                     </thead>
@@ -23,6 +27,10 @@
                         @forelse ($suppliers as $supplier)
                             <tr class="hover:bg-steel-700/30 transition-colors duration-200">
                                 <td class="px-8 py-6 text-lg">{{ $supplier->name }}</td>
+                                <td class="px-8 py-6 text-lg">{{ $supplier->company }}</td>
+                                <td class="px-8 py-6 text-lg">{{ $supplier->contact }}</td>
+                                <td class="px-8 py-6 text-lg">{{ $supplier->email }}</td>
+                                <td class="px-8 py-6 text-lg">{{ $supplier->address }}</td>
                                 <td class="px-8 py-6 text-center">
                                     <div class="flex justify-center space-x-4">
                                         <a href="{{ route('admin.suppliers.edit', $supplier) }}" 

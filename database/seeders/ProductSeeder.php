@@ -1,78 +1,29 @@
 <?php
-// namespace Database\Seeders;
-
-// use Illuminate\Database\Seeder;
-// use App\Models\Category;
-// use App\Models\Supplier;
-// use App\Models\Product;
-
-// class ProductSeeder extends Seeder
-// {
-//     public function run(): void
-//     {
-//         $cat1 = Category::create(['name' => 'Snacks']);
-//         $cat2 = Category::create(['name' => 'Dairy']);
-
-//         $sup1 = Supplier::create(['name' => 'Local Distributors']);
-//         $sup2 = Supplier::create(['name' => 'City Imports']);
-
-//         Product::create([
-//             'name' => 'Wai Wai Noodles', 'category_id' => $cat1->id, 'supplier_id' => $sup1->id,
-//             'price' => 25.00, 'current_stock' => 100, 'reorder_level' => 20
-//         ]);
-//         Product::create([
-//             'name' => 'DDC Milk (1L)', 'category_id' => $cat2->id, 'supplier_id' => $sup2->id,
-//             'price' => 110.00, 'current_stock' => 50, 'reorder_level' => 15
-//         ]);
-//     }
-// }
-
 
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use App\Models\Product;
 use App\Models\Category;
 use App\Models\Supplier;
-use App\Models\Product;
 use App\Models\User;
 
 class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        // Make sure at least one admin exists
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
-            ['name' => 'Admin', 'password' => bcrypt('password'), 'is_admin' => true]
-        );
+        $user = User::where('is_admin', false)->first();
+        $categories = Category::pluck('id', 'name');
+        $suppliers = Supplier::pluck('id', 'name');
 
-        $cat1 = Category::create(['name' => 'Snacks']);
-        $cat2 = Category::create(['name' => 'Dairy']);
+        $products = [
+            ['name' => 'Coca Cola 500ml', 'category_id' => $categories['Beverages'], 'supplier_id' => $suppliers['Sunrise Distribution'], 'purchase_price' => 60, 'selling_price' => 80, 'quantity' => 100, 'user_id' => $user->id],
+            ['name' => 'Lays Classic 50g', 'category_id' => $categories['Snacks'], 'supplier_id' => $suppliers['Nepal Snacks Supply'], 'purchase_price' => 30, 'selling_price' => 50, 'quantity' => 200, 'user_id' => $user->id],
+            ['name' => 'Colgate Toothpaste 100g', 'category_id' => $categories['Personal Care'], 'supplier_id' => $suppliers['Hygiene Traders'], 'purchase_price' => 80, 'selling_price' => 120, 'quantity' => 80, 'user_id' => $user->id],
+            ['name' => 'Dettol Handwash 250ml', 'category_id' => $categories['Cleaning Supplies'], 'supplier_id' => $suppliers['Everfresh Cleaning'], 'purchase_price' => 150, 'selling_price' => 200, 'quantity' => 50, 'user_id' => $user->id],
+            ['name' => 'A4 Notebook', 'category_id' => $categories['Stationery'], 'supplier_id' => $suppliers['Stationery Mart'], 'purchase_price' => 70, 'selling_price' => 100, 'quantity' => 150, 'user_id' => $user->id],
+        ];
 
-        $sup1 = Supplier::create(['name' => 'Local Distributors']);
-        $sup2 = Supplier::create(['name' => 'City Imports']);
-
-        // Admin-added products (visible to all)
-        Product::create([
-            'name' => 'Wai Wai Noodles',
-            'category_id' => $cat1->id,
-            'supplier_id' => $sup1->id,
-            'price' => 25.00,
-            'current_stock' => 100,
-            'reorder_level' => 20,
-            'user_id' => $admin->id,
-            'is_global' => true, // visible to all users
-        ]);
-
-        Product::create([
-            'name' => 'DDC Milk (1L)',
-            'category_id' => $cat2->id,
-            'supplier_id' => $sup2->id,
-            'price' => 110.00,
-            'current_stock' => 50,
-            'reorder_level' => 15,
-            'user_id' => $admin->id,
-            'is_global' => true, // visible to all users
-        ]);
+        Product::insert($products);
     }
 }

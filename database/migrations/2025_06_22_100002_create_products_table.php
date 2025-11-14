@@ -16,9 +16,9 @@ return new class extends Migration
             $table->string('name');
             $table->foreignId('category_id')->constrained()->onDelete('cascade');
             $table->foreignId('supplier_id')->constrained()->onDelete('cascade');
-            $table->decimal('price', 8, 2);
-            $table->integer('current_stock')->default(0);
-            $table->integer('reorder_level')->default(10);
+            $table->decimal('purchase_price', 12, 2)->default(0);
+            $table->decimal('selling_price', 12, 2)->default(0);
+            $table->integer('quantity')->default(0);
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Who added the product
             $table->boolean('is_global')->default(false); // If true, visible to all users
             $table->timestamps();

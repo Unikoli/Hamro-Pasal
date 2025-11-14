@@ -51,33 +51,44 @@
         </div>
     </div>
 
-    <!-- Price, Stock, and Reorder Level Row -->
+    <!-- purchase_price-->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-            <label for="price" class="block text-metallic-mid font-bold mb-3 text-lg">Price (Rs.):</label>
-            <input type="number" name="price" id="price" value="{{ old('price', $product->price ?? '') }}" 
+            <label for="purchase_price" class="block text-metallic-mid font-bold mb-3 text-lg">purchase_price (Rs.):</label>
+            <input type="number" name="purchase_price" id="purchase_price" value="{{ old('purchase_price', $product->purchase_price ?? '') }}" 
                    class="metallic-input shadow-lg appearance-none border rounded-lg w-full py-4 px-4 text-lg" 
                    step="0.01" placeholder="0.00" required>
-            @error('price') 
+            @error('purchase_price') 
                 <p class="text-red-400 text-sm mt-2 flex items-center">
                     <span class="mr-2">⚠️</span>{{ $message }}
                 </p> 
             @enderror
         </div>
-        
         <div>
-            <label for="current_stock" class="block text-metallic-mid font-bold mb-3 text-lg">Current Stock:</label>
-            <input type="number" name="current_stock" id="current_stock" value="{{ old('current_stock', $product->current_stock ?? '') }}" 
+            <label for="selling_price" class="block text-metallic-mid font-bold mb-3 text-lg">selling_price (Rs.):</label>
+            <input type="number" name="selling_price" id="selling_price" value="{{ old('selling_price', $product->selling_price ?? '') }}" 
+                   class="metallic-input shadow-lg appearance-none border rounded-lg w-full py-4 px-4 text-lg" 
+                   step="0.01" placeholder="0.00" required>
+            @error('selling_price') 
+                <p class="text-red-400 text-sm mt-2 flex items-center">
+                    <span class="mr-2">⚠️</span>{{ $message }}
+                </p> 
+            @enderror
+        </div>
+        <!-- quantity -->
+        <div>
+            <label for="quantity" class="block text-metallic-mid font-bold mb-3 text-lg">Quantity</label>
+            <input type="number" name="quantity" id="quantity" value="{{ old('quantity', $product->quantity ?? '') }}" 
                    class="metallic-input shadow-lg appearance-none border rounded-lg w-full py-4 px-4 text-lg" 
                    placeholder="0" required>
-            @error('current_stock') 
+            @error('quantity') 
                 <p class="text-red-400 text-sm mt-2 flex items-center">
                     <span class="mr-2">⚠️</span>{{ $message }}
                 </p> 
             @enderror
         </div>
         
-        <div>
+        <!-- <div>
             <label for="reorder_level" class="block text-metallic-mid font-bold mb-3 text-lg">Reorder Level:</label>
             <input type="number" name="reorder_level" id="reorder_level" value="{{ old('reorder_level', $product->reorder_level ?? 10) }}" 
                    class="metallic-input shadow-lg appearance-none border rounded-lg w-full py-4 px-4 text-lg" 
@@ -87,7 +98,7 @@
                     <span class="mr-2">⚠️</span>{{ $message }}
                 </p> 
             @enderror
-        </div>
+        </div> -->
     </div>
 </div>
 

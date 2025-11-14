@@ -13,13 +13,17 @@ return new class extends Migration
     {
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained();
-            // Assuming a multi-shop system might be a future goal
-            $table->foreignId('user_id')->comment('The user who made the sale')->constrained(); 
-            $table->integer('quantity');
+             $table->foreignId('customer_id')->nullable()->constrained()->nullOnDelete();
+            $table->decimal('total_amount', 12, 2)->default(0);
+            $table->decimal('discount', 12, 2)->default(0);
+            $table->decimal('tax', 12, 2)->default(0);
+            $table->string('payment_method')->nullable();
+            $table->date('sale_date');
             $table->timestamps();
         });
+        
     }
+    
 
     /**
      * Reverse the migrations.

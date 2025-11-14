@@ -20,9 +20,12 @@
                 <table class="metallic-table min-w-full rounded-lg overflow-hidden">
                     <thead>
                         <tr>
-                            <th class="px-8 py-4 text-left text-lg font-bold">PRODUCT NAME</th>
-                            <th class="px-8 py-4 text-center text-lg font-bold">STOCK</th>
-                            <th class="px-8 py-4 text-center text-lg font-bold">PRICE</th>
+                            <th class="px-8 py-4 text-left text-lg font-bold">Product name</th>
+                            <th class="px-8 py-4 text-center text-lg font-bold">Quantity(stock)</th>
+                            <th class="px-8 py-4 text-center text-lg font-bold">Supplier</th>
+                            <th class="px-8 py-4 text-center text-lg font-bold">Category</th>
+                            <th class="px-8 py-4 text-center text-lg font-bold">selling Price</th>
+                            <th class="px-8 py-4 text-center text-lg font-bold">Purchase Price</th>
                             <th class="px-8 py-4 text-center text-lg font-bold">ACTIONS</th>
                         </tr>
                     </thead>
@@ -32,7 +35,7 @@
                                 <td class="px-8 py-6 text-lg">
                                     <div>
                                         <div class="font-semibold">{{ $product->name }}</div>
-                                        @if($product->current_stock <= $product->reorder_level)
+                                        @if($product->quantity < 10)
                                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-900/50 text-red-300 mt-1">
                                                 ⚠️ Low Stock
                                             </span>
@@ -40,13 +43,29 @@
                                     </div>
                                 </td>
                                 <td class="px-8 py-6 text-center">
-                                    <span class="text-lg font-mono {{ $product->current_stock <= $product->reorder_level ? 'text-red-400' : 'text-metallic-mid' }}">
-                                        {{ $product->current_stock }}
+                                    <span class="text-lg font-mono {{ $product->quantity < 10 ? 'text-red-400' : 'text-metallic-mid' }}">
+                                        {{ $product->quantity }}
+                                    </span>
+                                </td>
+                                 <td class="px-8 py-6 text-center">
+                                    <span class="text-lg font-mono }}">
+                                        {{ $product->supplier->name }}
+                                    </span>
+                                </td>
+                                <td class="px-8 py-6 text-center">
+                                    <span class="text-lg font-mono }}">
+                                        {{ $product->category->name }}
+                                    </span>
+                                </td>
+                               
+                                <td class="px-8 py-6 text-center">
+                                    <span class="text-lg font-mono text-metallic-gold">
+                                        Rs. {{ number_format($product->selling_price, 2) }}
                                     </span>
                                 </td>
                                 <td class="px-8 py-6 text-center">
                                     <span class="text-lg font-mono text-metallic-gold">
-                                        Rs. {{ number_format($product->price, 2) }}
+                                        Rs. {{ number_format($product->purchase_price, 2) }}
                                     </span>
                                 </td>
                                 <td class="px-8 py-6 text-center">
@@ -76,7 +95,17 @@
                         @endforelse
                     </tbody>
                 </table>
+
             </div>
+            {{-- Pagination --}}
+            @if ($products->hasPages())
+                <div class="mt-8 flex justify-center">
+                    <div class="bg-steel-700/50 rounded-lg p-4">
+                        {{ $products->links() }}
+                    </div>
+                </div>  
+            @endif
+                    
         </div>
     </div>
 @endsection

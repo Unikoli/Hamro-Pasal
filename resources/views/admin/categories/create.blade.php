@@ -17,6 +17,7 @@
                            class="metallic-input shadow-lg appearance-none border rounded-lg w-full py-4 px-4 text-lg " 
                            placeholder="Enter category name..." required>
                     @error('name') 
+                    
                         <p class="text-red-400 text-sm mt-2 flex items-center">
                             <span class="mr-2">⚠️</span>{{ $message }}
                         </p> 

@@ -78,6 +78,7 @@ class ProductController extends Controller
 {
     public function index()
     {
+        //   public function index() { $products = Product::with('supplier')->get(); return view('products.index', compact('products')); }
         // Show products visible to the logged-in user
         $products = Product::with(['category', 'supplier'])
             ->visibleTo(Auth::user())
@@ -85,51 +86,21 @@ class ProductController extends Controller
             ->paginate(10);
 
         return view('products.index', compact('products'));
+        // $products = Product::with('supplier')->get();
+        //  return view('products.index', compact('products'));
     }
 
-    // public function create()
-
-    // {
-    //     $categories = Category::all();
-    //     $suppliers = Supplier::all();
-    //     return view('products.create', compact('categories', 'suppliers'));
-    // }
-
-    // public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'name' => 'required|string|max:255',
-    //         'category_id' => 'required|exists:categories,id',
-    //         'supplier_id' => 'required|exists:suppliers,id',
-    //         'price' => 'required|numeric|min:0',
-    //         'current_stock' => 'required|integer|min:0',
-    //         'reorder_level' => 'required|integer|min:0',
-    //         'is_global' => 'sometimes|boolean', // Admin can mark it global
-    //     ]);
-
-    //     // Automatically set the user_id to the logged-in user
-    //     $validated['user_id'] = Auth::id();
-
-    //     // Only admins can mark products as global
-    //     if (!Auth::user()->is_admin) {
-    //         $validated['is_global'] = false;
-    //     }
-
-    //     Product::create($validated);
-
-    //     return redirect()->route('products.index')
-    //         ->with('success', 'Product created successfully.');
-    // }
 
     public function create()
 {
+    // Auth::user();
     $categories = Category::all();
     $suppliers = Supplier::all();
 
     // You can also pass isAdmin to the view if needed
-    $isAdmin = auth()->user()->is_admin;
+    // $isAdmin = auth()->user()->is_admin;
 
-    return view('products.create', compact('categories', 'suppliers', 'isAdmin'));
+    return view('products.create', compact('categories', 'suppliers'));
 }
 
 public function store(Request $request)
@@ -138,18 +109,14 @@ public function store(Request $request)
         'name' => 'required|string|max:255',
         'category_id' => 'required|exists:categories,id',
         'supplier_id' => 'required|exists:suppliers,id',
-        'price' => 'required|numeric|min:0',
-        'current_stock' => 'required|integer|min:0',
-        'reorder_level' => 'required|integer|min:0',
+        'quantity' => 'required|numeric|min:0',
+        'purchase_price' => 'required|numeric|min:0',
+        'selling_price' => 'required|numeric|min:0',
     ]);
 
-    $user = auth()->user();
-
-    // Automatically assign the logged-in user as product owner
-    $validated['user_id'] = $user->id;
-
-    // Admin products are visible to everyone
-    $validated['is_global'] = $user->is_admin ? true : false;
+    // $user = auth()->user();
+    // $user = Auth::user();
+    $validated['user_id'] = Auth::id();
 
     Product::create($validated);
 
@@ -173,30 +140,44 @@ public function store(Request $request)
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'supplier_id' => 'required|exists:suppliers,id',
-            'price' => 'required|numeric|min:0',
-            'current_stock' => 'required|integer|min:0',
-            'reorder_level' => 'required|integer|min:0',
-            'is_global' => 'sometimes|boolean', // Only admin can update
+            'quantity' => 'required|numeric|min:0',
+            'purchase_price' => 'required|numeric|min:0',
+            'selling_price' => 'required|numeric|min:0',
         ]);
 
         // Only admins can change global status
-        if (!Auth::user()->is_admin) {
-            unset($validated['is_global']);
-        }
+        // if (!Auth::user()->is_admin) {
+        //     unset($validated['is_global']);
+        // }
 
         $product->update($validated);
 
-        return redirect()->route('products.index')
-            ->with('success', 'Product updated successfully.');
+        return redirect()->route('products.index')->with('success', 'Product updated successfully.');
+            
     }
 
+    // public function destroy(Product $product)
+    // {
+    //     // $this->authorize('delete', $product); // Optional: use policy
+
+    //     $product->delete();
+
+    //     return redirect()->route('products.index')
+    //         ->with('success', 'Product deleted successfully.');
+    // }
     public function destroy(Product $product)
-    {
-        // $this->authorize('delete', $product); // Optional: use policy
-
-        $product->delete();
-
+{
+    // 🔒 If the product is global and the current user is not an admin, block deletion
+    if ($product->is_global && !auth()->user()->hasRole('admin')) {
         return redirect()->route('products.index')
-            ->with('success', 'Product deleted successfully.');
+            ->with('error', 'You are not allowed to delete global products.');
     }
+
+    // ✅ Otherwise, allow deletion
+    $product->delete();
+
+    return redirect()->route('products.index')
+        ->with('success', 'Product deleted successfully.');
+}
+
 }
