@@ -30,7 +30,7 @@
                 <div class="mb-6">
                     <label for="product_id" class="block text-metallic-mid font-bold mb-3 text-lg">Product:</label>
                     <select name="product_id" id="product_id" 
-                            class="metallic-input shadow-lg border rounded-lg w-full py-4 px-4 text-lg" required>
+                            class="metallic-input shadow-lg border rounded-lg w-full py-4 px-4 text-lg bg-slate-800" required>
                         <option value="">-- Select a Product --</option>
                         @foreach($products as $product)
                             <option value="{{ $product->id }}" @selected(old('product_id') == $product->id)>
