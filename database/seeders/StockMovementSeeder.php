@@ -2,31 +2,30 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\StockMovement;
-use App\Models\Product;
 use App\Models\User;
+use App\Models\Product;
+use App\Models\StockMovement;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class StockMovementSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::where('is_admin', false)->first();
+        $user = User::where('email', 'shop@bazaar.com')->first();
         $products = Product::all();
 
-        foreach (range(1, 5) as $i) {
+        for ($i = 1; $i <= 30; $i++) {
             $product = $products->random();
             $type = rand(0, 1) ? 'IN' : 'OUT';
-            $qty = rand(5, 20);
 
             StockMovement::create([
                 'product_id' => $product->id,
                 'type' => $type,
-                'quantity' => $qty,
-                'description' => $type === 'IN' ? 'Received new stock' : 'Adjusted for sale',
+                'quantity' => rand(5, 30),
+                'description' => $type === 'IN' ? 'Stock added' : 'Stock reduced',
                 'created_by' => $user->id,
-                'created_at' => Carbon::now()->subDays(rand(1, 10)),
+                'created_at' => Carbon::now()->subDays(rand(1, 30)),
             ]);
         }
     }

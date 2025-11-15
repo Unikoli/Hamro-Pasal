@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder
             SupplierSeeder::class,
             ProductSeeder::class,
             PurchaseSeeder::class,
-            PurchaseItemSeeder::class,
+            // PurchaseItemSeeder::class,
             CustomerSeeder::class,
             SaleSeeder::class,
             SaleItemSeeder::class,

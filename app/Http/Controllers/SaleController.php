@@ -84,72 +84,72 @@ class SaleController extends Controller
 
     //     return redirect()->route('sales.index')->with('success', 'Sale recorded successfully!');
     // }
-   public function store(Request $request)
-{
-    $validated = $request->validate([
-        'customer_name' => 'nullable|string|max:255',
-        'products.*.product_id' => 'required|exists:products,id',
-        'products.*.quantity' => 'required|integer|min:1',
-        'products.*.selling_price' => 'required|numeric|min:0',
-        'discount' => 'nullable|numeric|min:0',
-        'tax' => 'nullable|numeric|min:0',
-        'payment_method' => 'nullable|string|max:50',
-        'sale_date' => 'required|date',
-    ]);
-
-    DB::transaction(function () use ($validated) {
-
-        // Find or create customer
-        $customer = null;
-        if (!empty($validated['customer_name'])) {
-            $customer = Customer::firstOrCreate(
-                ['name' => $validated['customer_name']]
-            );
-        }
-
-        // Calculate total amount
-        $totalAmount = collect($validated['products'])->sum(fn($p) => $p['selling_price'] * $p['quantity']);
-
-        // Create sale
-        $sale = Sale::create([
-            'customer_id' => $customer->id ?? null,
-            'total_amount' => $totalAmount,
-            'discount' => $validated['discount'] ?? 0,
-            'tax' => $validated['tax'] ?? 0,
-            'payment_method' => $validated['payment_method'] ?? 'Cash',
-            'sale_date' => $validated['sale_date'],
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'customer_name' => 'nullable|string|max:255',
+            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
+            'products.*.selling_price' => 'required|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0',
+            'tax' => 'nullable|numeric|min:0',
+            'payment_method' => 'nullable|string|max:50',
+            'sale_date' => 'required|date',
         ]);
 
-        // Process products
-        foreach ($validated['products'] as $productData) {
-            SaleItem::create([
-                'sale_id' => $sale->id,
-                'product_id' => $productData['product_id'],
-                'quantity' => $productData['quantity'],
-                'selling_price' => $productData['selling_price'],
-                'total' => $productData['quantity'] * $productData['selling_price'],
-            ]);
+        DB::transaction(function () use ($validated) {
 
-            $product = Product::find($productData['product_id']);
-            if ($product->quantity < $productData['quantity']) {
-                throw new \Exception("Insufficient stock for {$product->name}");
+            // Find or create customer
+            $customer = null;
+            if (!empty($validated['customer_name'])) {
+                $customer = Customer::firstOrCreate(
+                    ['name' => $validated['customer_name']]
+                );
             }
-            $product->decrement('quantity', $productData['quantity']);
 
-            StockMovement::create([
-                'product_id' => $product->id,
-                'type' => 'OUT',
-                'quantity' => $productData['quantity'],
-                'description' => "Sold via Sale ID {$sale->id}",
-                'created_by' => Auth::id(),
+            // Calculate total amount
+            $totalAmount = collect($validated['products'])->sum(fn($p) => $p['selling_price'] * $p['quantity']);
+
+            // Create sale
+            $sale = Sale::create([
+                'customer_id' => $customer->id ?? null,
+                'total_amount' => $totalAmount,
+                'discount' => $validated['discount'] ?? 0,
+                'tax' => $validated['tax'] ?? 0,
+                'payment_method' => $validated['payment_method'] ?? 'Cash',
+                'sale_date' => $validated['sale_date'],
             ]);
-        }
-    });
 
-    return redirect()->route('sales.index')->with('success', 'Sale recorded successfully!');
-}
+            // Process products
+            foreach ($validated['products'] as $productData) {
+                SaleItem::create([
+                    'sale_id' => $sale->id,
+                    'product_id' => $productData['product_id'],
+                    'quantity' => $productData['quantity'],
+                    'selling_price' => $productData['selling_price'],
+                    'total' => $productData['quantity'] * $productData['selling_price'],
+                ]);
 
-     /**
+                $product = Product::find($productData['product_id']);
+                if ($product->quantity < $productData['quantity']) {
+                    throw new \Exception("Insufficient stock for {$product->name}");
+                }
+                $product->decrement('quantity', $productData['quantity']);
+
+                StockMovement::create([
+                    'product_id' => $product->id,
+                    'type' => 'OUT',
+                    'quantity' => $productData['quantity'],
+                    'description' => "Sold via Sale ID {$sale->id}",
+                    'created_by' => Auth::id(),
+                ]);
+            }
+        });
+
+        return redirect()->route('sales.index')->with('success', 'Sale recorded successfully!');
+    }
+
+    /**
      * Download sales report as PDF
      */
     public function downloadReport(Request $request)
@@ -168,7 +168,7 @@ class SaleController extends Controller
             $query->whereDate('sale_date', today());
         } elseif ($request->type === 'monthly') {
             $query->whereMonth('sale_date', now()->month)
-                  ->whereYear('sale_date', now()->year);
+                ->whereYear('sale_date', now()->year);
         } elseif ($request->type === 'yearly') {
             $query->whereYear('sale_date', now()->year);
         }
@@ -181,7 +181,7 @@ class SaleController extends Controller
         $sales = $query->orderBy('sale_date', 'desc')->get();
 
         $pdf = PDF::loadView('sales.report', compact('sales'))
-                  ->setPaper('a4', 'landscape');
+            ->setPaper('a4', 'landscape');
 
         $filename = 'sales_report_' . now()->format('Y_m_d_H_i') . '.pdf';
 

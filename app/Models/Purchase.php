@@ -8,7 +8,7 @@ class Purchase extends Model
 {
     //  protected $fillable = ['supplier_id','total_cost'];
      protected $fillable = [
-        'product_id', 'supplier_id', 'quantity', 'purchase_price', 'purchase_date', 'user_id'
+         'supplier_id', 'quantity', 'purchase_price', 'purchase_date', 'user_id','name', 'product_id'
     ];
       public function product()
     {
@@ -16,4 +16,8 @@ class Purchase extends Model
     }
     public function supplier() { return $this->belongsTo(Supplier::class); }
     public function items() { return $this->hasMany(PurchaseItem::class); }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

@@ -2,21 +2,23 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Customer;
+use Illuminate\Database\Seeder;
 
 class CustomerSeeder extends Seeder
 {
     public function run(): void
     {
-        $customers = [
-            ['name' => 'Walk-in Customer', 'contact' => 'N/A', 'email' => null],
-            ['name' => 'Ram Thapa', 'contact' => '9801000001', 'email' => 'ram@example.com'],
-            ['name' => 'Sita Gurung', 'contact' => '9801000002', 'email' => 'sita@example.com'],
-            ['name' => 'Hari Basnet', 'contact' => '9801000003', 'email' => 'hari@example.com'],
-            ['name' => 'Gita KC', 'contact' => '9801000004', 'email' => 'gita@example.com'],
-        ];
+        $data = [];
 
-        Customer::insert($customers);
+        for ($i = 1; $i <= 30; $i++) {
+            $data[] = [
+                'name' => "Customer $i",
+                'contact' => '98' . rand(11111111, 99999999),
+                'email' => "customer$i@example.com",
+            ];
+        }
+
+        Customer::insert($data);
     }
 }

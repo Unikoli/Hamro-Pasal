@@ -48,7 +48,7 @@
                     <tr class="hover:bg-steel-700/30 transition-colors duration-200">
                         <td class="px-8 py-6 text-lg">
                             <div>
-                                <div class="font-semibold">{{ $purchase->product->name }}</div>
+                                <div class="font-semibold">{{ $purchase->name }}</div>
                             </div>
                         </td>
                         <td class="px-8 py-6 text-center text-lg">

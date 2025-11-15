@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Sale;
 use App\Models\Customer;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class SaleSeeder extends Seeder
 {
@@ -13,14 +13,14 @@ class SaleSeeder extends Seeder
     {
         $customers = Customer::pluck('id')->toArray();
 
-        foreach (range(1, 5) as $i) {
+        for ($i = 1; $i <= 30; $i++) {
             Sale::create([
                 'customer_id' => $customers[array_rand($customers)],
-                'total_amount' => rand(500, 3000),
-                'discount' => rand(0, 100),
-                'tax' => rand(0, 150),
+                'total_amount' => rand(200, 5000),
+                'discount' => rand(0, 200),
+                'tax' => rand(0, 300),
                 'payment_method' => 'Cash',
-                'sale_date' => Carbon::now()->subDays(rand(1, 10)),
+                'sale_date' => Carbon::now()->subDays(rand(1, 20)),
             ]);
         }
     }

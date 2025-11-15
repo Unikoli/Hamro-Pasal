@@ -23,7 +23,7 @@
                         <th class="px-8 py-4 text-left text-lg font-bold">Product</th>
                         <th class="px-8 py-4 text-left text-lg font-bold">Type</th>
                         <th class="px-8 py-4 text-left text-lg font-bold">Quantity</th>
-                        <th class="px-8 py-4 text-left text-lg font-bold">Description</th>
+                        <!-- <th class="px-8 py-4 text-left text-lg font-bold">Description</th> -->
                     </tr>
                 </thead>
 
@@ -43,7 +43,7 @@
                             </td>
 
                             <td class="px-8 py-6 text-lg">{{ $movement->quantity }}</td>
-                            <td class="px-8 py-6 text-lg">{{ $movement->description ?? '-' }}</td>
+                            <!-- <td class="px-8 py-6 text-lg">{{ $movement->description ?? '-' }}</td> -->
                         </tr>
                     @empty
                         <tr>

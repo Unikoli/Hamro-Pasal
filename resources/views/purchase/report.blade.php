@@ -33,7 +33,7 @@
             @foreach ($purchases as $index => $purchase)
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ $purchase->product->name }}</td>
+                    <td>{{ $purchase->name }}</td>
                     <td>{{ $purchase->supplier->name }}</td>
                     <td>{{ $purchase->quantity }}</td>
                     <td>{{ number_format($purchase->purchase_price, 2) }}</td>

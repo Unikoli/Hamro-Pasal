@@ -92,6 +92,8 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/purchase/{id}', [PurchaseController::class, 'update'])->name('purchase.update');
     Route::delete('/purchase/{id}', [PurchaseController::class, 'destroy'])->name('purchase.destroy');
     Route::get('/purchases/report/download', [PurchaseController::class, 'downloadReport'])->name('purchase.report.download');
+    Route::get('/purchase-info/{id}', [ProductController::class, 'getPurchaseInfo']);
+
 
 
     // ✅ Optional: Supplier-wise purchase history

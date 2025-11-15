@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Sale;
-use App\Models\SaleItem;
 use App\Models\Product;
+use App\Models\SaleItem;
+use Illuminate\Database\Seeder;
 
 class SaleItemSeeder extends Seeder
 {
@@ -20,7 +20,7 @@ class SaleItemSeeder extends Seeder
             SaleItem::create([
                 'sale_id' => $sale->id,
                 'product_id' => $product->id,
-                'quantity' => rand(1, 3),
+                'quantity' => rand(1, 5),
                 'selling_price' => $product->selling_price,
             ]);
         }

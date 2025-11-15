@@ -25,10 +25,35 @@
         </div>
     </div>
 
+    {{-- === PROFIT TREND CHART === --}}
+    <div class="metallic-card p-6 mb-8">
+        <h3 class="text-xl font-bold text-metallic-mid mb-4">Profit Trend (Last 30 Days)</h3>
+        <canvas id="profitChart" height="150"></canvas>
+    </div>
+
+    {{-- === SALES VS PROFIT COMPARISON === --}}
+    <div class="metallic-card p-6 mb-8">
+        <h3 class="text-xl font-bold text-metallic-mid mb-4">Sales vs Profit (Last 30 Days)</h3>
+        <canvas id="salesProfitChart" height="150"></canvas>
+    </div>
+
     {{-- === STOCK MOVEMENT PIE === --}}
     <div class="metallic-card p-6 mb-8">
         <h3 class="text-xl font-bold text-metallic-mid mb-4">Stock Movements (IN vs OUT)</h3>
         <canvas id="stockPie" height="120"></canvas>
+    </div>
+
+    {{-- === FORECAST DAILY CHARTS === --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div class="metallic-card p-6">
+            <h3 class="text-xl font-bold text-metallic-mid mb-2">Daily Forecast (Quantity)</h3>
+            <canvas id="forecastQtyLine" height="150"></canvas>
+        </div>
+
+        <div class="metallic-card p-6">
+            <h3 class="text-xl font-bold text-metallic-mid mb-2">Daily Forecast Revenue</h3>
+            <canvas id="forecastRevenueBar" height="150"></canvas>
+        </div>
     </div>
 
     {{-- === TOP PRODUCTS / CUSTOMERS / SUPPLIERS === --}}
@@ -39,7 +64,7 @@
     </div>
 
     {{-- === RECENT SALES & LOW STOCK === --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <div class="metallic-card p-6">
             <h3 class="text-xl font-bold text-metallic-mid mb-4">Recent Sales</h3>
             @foreach($recentSales as $sale)
@@ -51,20 +76,44 @@
         </div>
 
         <div class="metallic-card p-6">
-            <h3 class="text-xl font-bold text-metallic-mid mb-4">Low Stock Alerts</h3>
+            <h3 class="text-xl font-bold text-metallic-mid mb-4">Low Stock Alerts & Reorder</h3>
             @foreach($lowStockAlerts as $p)
-                <div class="flex justify-between p-3 bg-red-500/10 border border-red-500/20 rounded mb-2">
+                <div class="flex justify-between items-center p-3 bg-red-500/10 border border-red-500/20 rounded mb-2">
                     <span class="text-white">{{ $p->name }}</span>
                     <span class="text-red-400 font-bold">{{ $p->quantity }}</span>
+                    <span class="text-yellow-300 font-semibold">Reorder: {{ $p->suggested_reorder ?? 10 }}</span>
+                    <a href="{{ route('purchases.create') }}?product_id={{ $p->id }}"
+                       class="metallic-btn metallic-btn-success px-2 py-1 text-sm rounded">Restock</a>
                 </div>
             @endforeach
         </div>
     </div>
+
 </div>
 
-{{-- === CHART.JS SCRIPTS === --}}
+{{-- === CHART.JS === --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
+
+// ===============================
+// FIXED: FORECAST API RESPONSE
+// ===============================
+const forecast = @json($forecast);
+
+// ✅ FIXED: CORRECT KEY NAMES
+const forecastDates    = forecast.forecast_dates    ?? [];
+const forecastQty      = forecast.forecast_qty      ?? [];
+const forecastRevenue  = forecast.forecast_revenue  ?? [];
+
+console.log("Forecast Dates:", forecastDates);
+console.log("Forecast Qty:", forecastQty);
+console.log("Forecast Revenue:", forecastRevenue);
+
+
+// ===============================
+// SALES TREND
+// ===============================
 const salesCtx = document.getElementById('salesChart').getContext('2d');
 new Chart(salesCtx, {
     type: 'line',
@@ -74,13 +123,14 @@ new Chart(salesCtx, {
             label: 'Sales (Rs)',
             data: @json($salesChart['totals']),
             borderColor: '#d4af37',
+            backgroundColor: 'rgba(212,175,55,0.2)',
             fill: true,
             tension: 0.4
         }]
-    },
-    options: { plugins: { legend: { labels: { color: '#c5d1d5' } } } }
+    }
 });
 
+// PURCHASES TREND
 const purchaseCtx = document.getElementById('purchaseChart').getContext('2d');
 new Chart(purchaseCtx, {
     type: 'bar',
@@ -89,11 +139,54 @@ new Chart(purchaseCtx, {
         datasets: [{
             label: 'Purchases (Rs)',
             data: @json($purchaseChart['totals']),
-            backgroundColor: 'rgba(96,165,250,0.6)',
+            backgroundColor: 'rgba(96,165,250,0.6)'
         }]
-    },
+    }
 });
 
+// PROFIT TREND
+const profitCtx = document.getElementById('profitChart').getContext('2d');
+new Chart(profitCtx, {
+    type: 'line',
+    data: {
+        labels: @json($salesChart['labels']),
+        datasets: [{
+            label: 'Profit (Rs)',
+            data: @json($profitChart['profits']),
+            borderColor: '#22c55e',
+            backgroundColor: 'rgba(34,197,94,0.2)',
+            fill: true,
+            tension: 0.4
+        }]
+    }
+});
+
+// SALES VS PROFIT
+const salesProfitCtx = document.getElementById('salesProfitChart').getContext('2d');
+new Chart(salesProfitCtx, {
+    type: 'line',
+    data: {
+        labels: @json($salesChart['labels']),
+        datasets: [
+            {
+                label: 'Sales (Rs)',
+                data: @json($salesChart['totals']),
+                borderColor: '#d4af37',
+                fill: false,
+                tension: 0.4
+            },
+            {
+                label: 'Profit (Rs)',
+                data: @json($profitChart['profits']),
+                borderColor: '#22c55e',
+                fill: false,
+                tension: 0.4
+            }
+        ]
+    }
+});
+
+// STOCK PIE
 const stockCtx = document.getElementById('stockPie').getContext('2d');
 new Chart(stockCtx, {
     type: 'doughnut',
@@ -101,9 +194,46 @@ new Chart(stockCtx, {
         labels: ['Stock IN', 'Stock OUT'],
         datasets: [{
             data: [{{ $stockMovement['IN'] ?? 0 }}, {{ $stockMovement['OUT'] ?? 0 }}],
-            backgroundColor: ['#22c55e', '#ef4444'],
+            backgroundColor: ['#22c55e', '#ef4444']
         }]
-    },
+    }
 });
+
+// ===============================
+// FIXED: DAILY FORECAST (LINE)
+// ===============================
+const forecastLineCtx = document.getElementById('forecastQtyLine').getContext('2d');
+new Chart(forecastLineCtx, {
+    type: 'line',
+    data: {
+        labels: forecastDates,
+        datasets: [{
+            label: "Daily Forecast Quantity",
+            data: forecastQty,
+            borderColor: "#FFD700",
+            backgroundColor: "rgba(255,215,0,0.25)",
+            fill: true,
+            tension: 0.4
+        }]
+    }
+});
+
+// ===============================
+// FIXED: DAILY FORECAST REVENUE
+// ===============================
+const forecastBarCtx = document.getElementById('forecastRevenueBar').getContext('2d');
+new Chart(forecastBarCtx, {
+    type: 'bar',
+    data: {
+        labels: forecastDates,
+        datasets: [{
+            label: "Daily Forecast Revenue (Rs)",
+            data: forecastRevenue,
+            backgroundColor: "rgba(0,255,180,0.4)"
+        }]
+    }
+});
+
 </script>
+
 @endsection

@@ -2,36 +2,33 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Category;
 use App\Models\User;
+use App\Models\Category;
+use Illuminate\Database\Seeder;
 
 class CategorySeeder extends Seeder
 {
     public function run(): void
     {
-        // Get the shopkeeper user
         $user = User::where('email', 'shop@bazaar.com')->first();
 
-        // If user doesn't exist, create one (safety check)
-        if (!$user) {
-            $user = User::create([
-                'name' => 'Shopkeeper User',
-                'email' => 'shop@bazaar.com',
-                'password' => bcrypt('shopkeeper'),
-                'is_admin' => false,
-            ]);
-        }
-
-        // Retail shop-related categories
-        $categories = [
-            ['name' => 'Beverages', 'user_id' => $user->id],
-            ['name' => 'Snacks', 'user_id' => $user->id],
-            ['name' => 'Personal Care', 'user_id' => $user->id],
-            ['name' => 'Cleaning Supplies', 'user_id' => $user->id],
-            ['name' => 'Stationery', 'user_id' => $user->id],
+        $baseCategories = [
+            'Beverages', 'Snacks', 'Personal Care', 'Cleaning Supplies', 'Stationery',
+            'Frozen Foods', 'Bakery Items', 'Baby Care', 'Electronics', 'Dairy Products',
+            'Grains', 'Household Items', 'Pet Food', 'Cosmetics', 'Vegetables',
+            'Fruits', 'Health Supplements', 'Breakfast Items', 'Meat Products', 'Kitchen Needs',
+            'Gadgets', 'Footwear', 'Gardening', 'Lighting', 'Home Decor',
+            'Spices', 'Condiments', 'Canned Goods', 'Seasonal Items', 'Organic Foods'
         ];
 
-        Category::insert($categories);
+        $data = [];
+        foreach ($baseCategories as $cat) {
+            $data[] = [
+                'name' => $cat,
+                'user_id' => $user->id,
+            ];
+        }
+
+        Category::insert($data);
     }
 }

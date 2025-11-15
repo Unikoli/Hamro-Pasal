@@ -43,44 +43,68 @@ class PurchaseController extends Controller
      * Store a newly created purchase
      */
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'product_id'  => 'required|exists:products,id',
-            'supplier_id' => 'required|exists:suppliers,id',
-            'quantity'    => 'required|numeric|min:1',
-            'purchase_price' => 'required|numeric|min:0',
-            'purchase_date'  => 'required|date',
-        ]);
-
-        // Save purchase
-        
-
-        $purchase = Purchase::create([
-            'product_id' => $validated['product_id'],
-            'supplier_id' => $validated['supplier_id'],
-            'quantity' => $validated['quantity'],
-            'purchase_price' => $validated['purchase_price'],
-            'purchase_date' => $validated['purchase_date'],
-            'user_id' => Auth::id(),
-        ]);
-
-        // Update stock automatically
-        $validated['user_id'] = Auth::id();
-        $product = Product::findOrFail($validated['product_id']);
-        $product->quantity += $validated['quantity'];
-        $product->save();
-
-         // 🔥 Record stock movement (IN)
-        StockMovement::create([
-        'product_id' => $product->id,
-        'type' => 'IN',
-        'quantity' => $validated['quantity'],
-        'description' => "Purchased from supplier ID {$validated['supplier_id']}",
-        'created_by' => Auth::id(),
+{
+    $validated = $request->validate([
+        'name'           => 'required|string|min:2',
+        'supplier_id'    => 'required|exists:suppliers,id',
+        'quantity'       => 'required|numeric|min:1',
+        'purchase_price' => 'required|numeric|min:0',
+        'purchase_date'  => 'required|date',
     ]);
 
-        return redirect()->route('purchase.index')->with('success', 'Purchase added and stock updated successfully!');
+    // -------------------------------------------
+    // 1️⃣ Find existing product OR create new one
+    // -------------------------------------------
+    $product = Product::where('name', $validated['name'])->first();
+
+    if (!$product) {
+        // create new product if not exists
+        $product = Product::create([
+            'name'           => $validated['name'],
+            'category_id'    => $validated['category_id'] ?? 1,
+            'supplier_id'    => $validated['supplier_id'],
+            'purchase_price' => $validated['purchase_price'],
+            'selling_price'  => $validated['purchase_price'], // you can customize later
+            'quantity'       => 0,
+            'user_id'        => Auth::id(),
+        ]);
     }
+
+    // -------------------------------------------
+    // 2️⃣ Create Purchase
+    // -------------------------------------------
+    $purchase = Purchase::create([
+        'product_id'     => $product->id,
+        'name'           => $validated['name'],
+        'supplier_id'    => $validated['supplier_id'],
+        'quantity'       => $validated['quantity'],
+        'purchase_price' => $validated['purchase_price'],
+        'purchase_date'  => $validated['purchase_date'],
+        'user_id'        => Auth::id(),
+    ]);
+
+    // -------------------------------------------
+    // 3️⃣ Update product stock
+    // -------------------------------------------
+    $product->quantity += $validated['quantity'];
+    $product->save();
+
+    // -------------------------------------------
+    // 4️⃣ Stock Movement (IN)
+    // -------------------------------------------
+    StockMovement::create([
+        'product_id'  => $product->id,       // ✅ correct
+        'type'        => 'IN',
+        'quantity'    => $validated['quantity'],
+        'description' => "Purchased (Purchase ID: {$purchase->id})",
+        'created_by'  => Auth::id(),
+    ]);
+
+    return redirect()
+        ->route('purchase.index')
+        ->with('success', 'Purchase added and stock updated successfully!');
+}
+
 
     /**
      * Show form for editing an existing purchase
