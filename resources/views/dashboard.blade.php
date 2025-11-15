@@ -82,7 +82,7 @@
                     <span class="text-white">{{ $p->name }}</span>
                     <span class="text-red-400 font-bold">{{ $p->quantity }}</span>
                     <span class="text-yellow-300 font-semibold">Reorder: {{ $p->suggested_reorder ?? 10 }}</span>
-                    <a href="{{ route('purchases.create') }}?product_id={{ $p->id }}"
+                    <a href="{{ route('purchase.create') }}?product_id={{ $p->id }}"
                        class="metallic-btn metallic-btn-success px-2 py-1 text-sm rounded">Restock</a>
                 </div>
             @endforeach
