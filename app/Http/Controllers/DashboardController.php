@@ -158,30 +158,133 @@ class DashboardController extends Controller
     }
 
     // ===================== Forecast Method =====================
-  private function getForecastData()
+//   private function getForecastData()
+// {
+//     // Get all sales from the database (or last N days if needed)
+//     $sales = Sale::select('sale_date','total_amount')
+//         ->orderBy('sale_date')
+//         ->get()
+//         ->map(function($sale) {
+//             return [
+//                 'date' => Carbon::parse($sale->sale_date)->format('Y-m-d'),
+//                 'quantity' => 1, // can be total quantity if you track quantity
+//                 'price' => $sale->total_amount
+//             ];
+//         });
+
+//     // // Prepare arrays for Blade/Chart.js
+//     // $dates = $sales->pluck('date')->toArray();
+//     // $qty   = $sales->pluck('quantity')->toArray();
+//     // $revenue = $sales->pluck('price')->toArray();
+
+//     // return [
+//     //     'forecast_dates' => $dates,
+//     //     'forecast_qty'   => $qty,
+//     //     'forecast_revenue' => $revenue,
+//     // ];
+
+
+//     $payload = ['sales' => $sales->toArray()];
+
+//     try {
+//         $salesResponse = Http::post("http://127.0.0.1:8002/forecast/sales", $payload);
+//         $revenueResponse = Http::post("http://127.0.0.1:8002/forecast/revenue", $payload);
+
+//         if ($salesResponse->failed() || $revenueResponse->failed()) {
+//             throw new \Exception("FastAPI not responding");
+//         }
+
+//         return [
+//             'forecast_dates'   => array_keys($salesResponse->json()['next_7_days_sales']),
+//             'forecast_qty'     => $salesResponse->json()['next_7_days_sales'],
+//             'weekly_sales'     => $salesResponse->json()['weekly_sales_forecast'],
+
+//             'forecast_revenue' => $revenueResponse->json()['next_7_days_revenue'],
+//             'weekly_revenue'   => $revenueResponse->json()['weekly_revenue_forecast'],
+//         ];
+
+//     } catch (\Exception $e) {
+//         // fallback: return raw database data
+//         return [
+//             'forecast_dates' => $sales->pluck('date')->toArray(),
+//             'forecast_qty' => $sales->pluck('quantity')->toArray(),
+//             'forecast_revenue' => $sales->pluck('price')->toArray(),
+//         ];
+//     }
+// }
+
+
+// private function getForecastData()
+// {
+//     try {
+//         $response = Http::post("http://127.0.0.1:8002/forecast/sales");
+
+//     logger()->info("response from API", ['response' => $response->json()]);
+
+
+//         if ($response->failed()) {
+//             throw new \Exception("FastAPI not responding");
+//         }
+
+//         $sales = $response->json("daily_sales");
+
+//         return [
+//             "daily_sales_dates" => array_keys($sales),
+//             "daily_sales_values" => array_values($sales),
+//         ];
+
+//     } catch (\Exception $e) {
+//         return [
+//             "daily_sales_dates" => [],
+//             "daily_sales_values" => [],
+//         ];
+//     }
+// }
+
+
+private function getForecastData()
 {
-    // Get all sales from the database (or last N days if needed)
-    $sales = Sale::select('sale_date','total_amount')
-        ->orderBy('sale_date')
-        ->get()
-        ->map(function($sale) {
-            return [
-                'date' => Carbon::parse($sale->sale_date)->format('Y-m-d'),
-                'quantity' => 1, // can be total quantity if you track quantity
-                'price' => $sale->total_amount
-            ];
-        });
+    try {
+        // Get sales data from DB
+        $sales = Sale::select('sale_date', 'total_amount')
+            ->orderBy('sale_date')
+            ->get()
+            ->map(function ($sale) {
+                return [
+                    'date' => Carbon::parse($sale->sale_date)->format('Y-m-d'),
+                    'quantity' => 1, // or actual quantity if you track quantity
+                    'price' => $sale->total_amount,
+                ];
+            });
 
-    // Prepare arrays for Blade/Chart.js
-    $dates = $sales->pluck('date')->toArray();
-    $qty   = $sales->pluck('quantity')->toArray();
-    $revenue = $sales->pluck('price')->toArray();
+        $payload = ['sales' => $sales->toArray()];
 
-    return [
-        'forecast_dates' => $dates,
-        'forecast_qty'   => $qty,
-        'forecast_revenue' => $revenue,
-    ];
+        // Send POST request to FastAPI
+        $response = Http::post("http://127.0.0.1:8002/forecast/sales", $payload);
+
+        logger()->info("Response from Forecast API", ['response' => $response->json()]);
+
+        if ($response->failed()) {
+            throw new \Exception("FastAPI not responding");
+        }
+
+        // Get forecast from API response
+        $salesForecast = $response->json('next_7_days_sales');
+
+        return [
+            "daily_sales_dates"  => array_keys($salesForecast),
+            "daily_sales_values" => array_values($salesForecast),
+        ];
+
+    } catch (\Exception $e) {
+        logger()->error("Forecast API error: ".$e->getMessage());
+        return [
+            "daily_sales_dates"  => [],
+            "daily_sales_values" => [],
+        ];
+    }
 }
+
+
 
 }
