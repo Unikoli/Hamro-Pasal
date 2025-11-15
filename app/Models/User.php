@@ -48,6 +48,16 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+//     public function isAdmin()
+// {
+//     return $this->role === 'admin'; // or however your roles are stored
+// }
+
+public function isAdmin(): bool
+{
+    return (bool) $this->is_admin;
+}
+
 
     public function sales(): HasMany
     {

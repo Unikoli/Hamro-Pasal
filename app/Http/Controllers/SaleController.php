@@ -1,117 +1,190 @@
 <?php
-// namespace App\Http\Controllers;
-
-// use App\Models\Product;
-// use App\Models\Sale;
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\DB;
-
-// class SaleController extends Controller
-// {
-    
-//     public function create()
-//     {
-//         $products = Product::orderBy('name')->get();
-//         return view('sales.create', compact('products'));
-//     }
-
-//     public function store(Request $request) {
-//         $validated = $request->validate([
-//             'product_id' => 'required|exists:products,id',
-//             'quantity' => 'required|integer|min:1',
-//         ]);
-
-//         try {
-//             DB::transaction(function () use ($validated, $request) {
-//                 $product = Product::lockForUpdate()->findOrFail($validated['product_id']);
-//                 if ($product->current_stock < $validated['quantity']) {
-//                     throw new \Exception("Insufficient stock! Only {$product->current_stock} available.");
-//                 }
-
-//                 Sale::create([
-//                     'product_id' => $validated['product_id'],
-//                     'quantity' => $validated['quantity'],
-//                     'user_id' => auth()->id(),
-//                 ]);
-
-//                 $product->decrement('current_stock', $validated['quantity']);
-//             });
-
-//         } catch (\Exception $e) {
-//             return back()->with('error', $e->getMessage())->withInput();
-//         }
-        
-//         // Redirect to a sales creation form or the dashboard
-//         return redirect()->route('dashboard')->with('success', 'Sale recorded!');
-//     }
-// }
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\Product;
+use App\Models\Customer;
+use App\Models\StockMovement;
+// use Illuminate\Container\Facade\Auth;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
+// use Barryvdh\DomPDF\Facade\Pdf;
+use PDF; // add at the top
 
 class SaleController extends Controller
 {
-    // Show the sales creation form
-    public function create()
+    public function index()
     {
-        // Only show products visible to the logged-in user
-        $products = Product::visibleTo(Auth::user())->orderBy('name')->get();
-        return view('sales.create', compact('products'));
+        $sales = Sale::with('customer')->latest()->paginate(10);
+        return view('sales.index', compact('sales'));
     }
 
-    // Store a new sale
+    public function create()
+    {
+        $customers = Customer::all();
+        $products = Product::all();
+        return view('sales.create', compact('customers', 'products'));
+    }
+
+    // public function store(Request $request)
+
+    // {
+    //     $validated = $request->validate([
+    //         'customer_id' => 'nullable|exists:customers,id',
+    //         'products.*.product_id' => 'required|exists:products,id',
+    //         'products.*.quantity' => 'required|integer|min:1',
+    //         'products.*.selling_price' => 'required|numeric|min:0',
+    //         'discount' => 'nullable|numeric|min:0',
+    //         'tax' => 'nullable|numeric|min:0',
+    //         'payment_method' => 'nullable|string|max:50',
+    //         'sale_date' => 'required|date',
+    //     ]);
+
+    //     DB::transaction(function () use ($validated) {
+    //         $totalAmount = collect($validated['products'])->sum(fn($p) => $p['selling_price'] * $p['quantity']);
+
+    //         $sale = Sale::create([
+    //             'customer_id' => $validated['customer_id'] ?? null,
+    //             'total_amount' => $totalAmount,
+    //             'discount' => $validated['discount'] ?? 0,
+    //             'tax' => $validated['tax'] ?? 0,
+    //             'payment_method' => $validated['payment_method'] ?? 'Cash',
+    //             'sale_date' => $validated['sale_date'],
+    //         ]);
+
+    //         foreach ($validated['products'] as $productData) {
+    //             SaleItem::create([
+    //                 'sale_id' => $sale->id,
+    //                 'product_id' => $productData['product_id'],
+    //                 'quantity' => $productData['quantity'],
+    //                 'selling_price' => $productData['selling_price'],
+    //                 'total' => $productData['quantity'] * $productData['selling_price'],
+    //             ]);
+
+    //             // Update stock
+    //             $product = Product::find($productData['product_id']);
+    //             if ($product->quantity < $productData['quantity']) {
+    //                 throw new \Exception("Insufficient stock for {$product->name}");
+    //             }
+    //             $product->decrement('quantity', $productData['quantity']);
+
+    //             // 🔥 Record stock movement (OUT)
+    //             StockMovement::create([
+    //                 'product_id' => $product->id,
+    //                 'type' => 'OUT',
+    //                 'quantity' => $productData['quantity'],
+    //                 'description' => "Sold via Sale ID {$sale->id}",
+    //                 'created_by' => Auth::id(),
+    //             ]);
+    //         }
+    //     });
+
+    //     return redirect()->route('sales.index')->with('success', 'Sale recorded successfully!');
+    // }
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
+            'customer_name' => 'nullable|string|max:255',
+            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
+            'products.*.selling_price' => 'required|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0',
+            'tax' => 'nullable|numeric|min:0',
+            'payment_method' => 'nullable|string|max:50',
+            'sale_date' => 'required|date',
         ]);
 
-        try {
-            DB::transaction(function () use ($validated) {
-                $product = Product::lockForUpdate()->findOrFail($validated['product_id']);
+        DB::transaction(function () use ($validated) {
 
-                // Ensure the logged-in user has access to this product
-                if (!$product->is_global && $product->user_id !== Auth::id()) {
-                    throw new \Exception("You do not have permission to sell this product.");
-                }
+            // Find or create customer
+            $customer = null;
+            if (!empty($validated['customer_name'])) {
+                $customer = Customer::firstOrCreate(
+                    ['name' => $validated['customer_name']]
+                );
+            }
 
-                if ($product->current_stock < $validated['quantity']) {
-                    throw new \Exception("Insufficient stock! Only {$product->current_stock} available.");
-                }
+            // Calculate total amount
+            $totalAmount = collect($validated['products'])->sum(fn($p) => $p['selling_price'] * $p['quantity']);
 
-                Sale::create([
-                    'product_id' => $validated['product_id'],
-                    'quantity' => $validated['quantity'],
-                    'user_id' => Auth::id(),
+            // Create sale
+            $sale = Sale::create([
+                'customer_id' => $customer->id ?? null,
+                'total_amount' => $totalAmount,
+                'discount' => $validated['discount'] ?? 0,
+                'tax' => $validated['tax'] ?? 0,
+                'payment_method' => $validated['payment_method'] ?? 'Cash',
+                'sale_date' => $validated['sale_date'],
+            ]);
+
+            // Process products
+            foreach ($validated['products'] as $productData) {
+                SaleItem::create([
+                    'sale_id' => $sale->id,
+                    'product_id' => $productData['product_id'],
+                    'quantity' => $productData['quantity'],
+                    'selling_price' => $productData['selling_price'],
+                    'total' => $productData['quantity'] * $productData['selling_price'],
                 ]);
 
-                $product->decrement('current_stock', $validated['quantity']);
-            });
+                $product = Product::find($productData['product_id']);
+                if ($product->quantity < $productData['quantity']) {
+                    throw new \Exception("Insufficient stock for {$product->name}");
+                }
+                $product->decrement('quantity', $productData['quantity']);
 
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage())->withInput();
-        }
+                StockMovement::create([
+                    'product_id' => $product->id,
+                    'type' => 'OUT',
+                    'quantity' => $productData['quantity'],
+                    'description' => "Sold via Sale ID {$sale->id}",
+                    'created_by' => Auth::id(),
+                ]);
+            }
+        });
 
-        return redirect()->route('dashboard')->with('success', 'Sale recorded!');
+        return redirect()->route('sales.index')->with('success', 'Sale recorded successfully!');
     }
 
-    // Optional: List sales for the logged-in user
-    public function index()
+    /**
+     * Download sales report as PDF
+     */
+    public function downloadReport(Request $request)
     {
-        $sales = Sale::with('product')
-            ->whereHas('product', function ($q) {
-                $q->where('is_global', true)
-                  ->orWhere('user_id', Auth::id());
-            })
-            ->latest()
-            ->paginate(10);
+        // Validate input for custom date range
+        $request->validate([
+            'from_date' => 'nullable|date',
+            'to_date'   => 'nullable|date|after_or_equal:from_date',
+            'type'      => 'nullable|string|in:daily,monthly,yearly,all',
+        ]);
 
-        return view('sales.index', compact('sales'));
+        $query = Sale::with('customer', 'saleItems.product');
+
+        // Filter by type
+        if ($request->type === 'daily') {
+            $query->whereDate('sale_date', today());
+        } elseif ($request->type === 'monthly') {
+            $query->whereMonth('sale_date', now()->month)
+                ->whereYear('sale_date', now()->year);
+        } elseif ($request->type === 'yearly') {
+            $query->whereYear('sale_date', now()->year);
+        }
+
+        // Custom date range
+        if ($request->from_date && $request->to_date) {
+            $query->whereBetween('sale_date', [$request->from_date, $request->to_date]);
+        }
+
+        $sales = $query->orderBy('sale_date', 'desc')->get();
+
+        $pdf = PDF::loadView('sales.report', compact('sales'))
+            ->setPaper('a4', 'landscape');
+
+        $filename = 'sales_report_' . now()->format('Y_m_d_H_i') . '.pdf';
+
+        return $pdf->download($filename);
     }
 }

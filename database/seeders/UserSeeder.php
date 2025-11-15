@@ -1,30 +1,6 @@
 <?php
+
 namespace Database\Seeders;
-
-// use Illuminate\Database\Seeder;
-// use App\Models\User;
-
-// class UserSeeder extends Seeder
-// {
-//     public function run(): void
-//     {
-//         // Create Admin User
-//         $admin = User::factory()->create([
-//             'name' => 'Admin User',
-//             'email' => 'admin@bazaar.com',
-//             'password' => bcrypt('admin')
-//         ]);
-//         $admin->assignRole('admin');
-
-//         // Create Shopkeeper Users
-//         $shopkeeper = User::factory()->create([
-//             'name' => 'Shopkeeper User',
-//             'email' => 'shop@bazaar.com',
-//             'password' => bcrypt('shopkeeper')
-//         ]);
-//         $shopkeeper->assignRole('shopkeeper');
-//     }
-// }
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -33,7 +9,7 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Admin user
+        // Admin
         User::create([
             'name' => 'Admin User',
             'email' => 'admin@bazaar.com',
@@ -41,7 +17,15 @@ class UserSeeder extends Seeder
             'is_admin' => true,
         ]);
 
-        // Regular user
+        // Unique user
+        User::create([
+            'name' => 'Unique User',
+            'email' => 'unique@bazaar.com',
+            'password' => bcrypt('unique123'),
+            'is_admin' => false,
+        ]);
+
+        // Shopkeeper user (main data belongs to this user)
         User::create([
             'name' => 'Shopkeeper User',
             'email' => 'shop@bazaar.com',

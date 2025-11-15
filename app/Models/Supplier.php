@@ -10,8 +10,12 @@ class Supplier extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'company', 'contact', 'email', 'address','user_id'];
 
+      public function purchases()
+    {
+        return $this->hasMany(Purchase::class);
+    }
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
