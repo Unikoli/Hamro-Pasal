@@ -64,7 +64,7 @@
 # #         daily_avg = relevant_data.ewm(span=FORECASTING_WINDOW_DAYS, adjust=False).mean().iloc[-1]
 
 # #     weekly_forecast = daily_avg * PROJECTION_DAYS
-# #     return {"Forecast": round(weekly_forecast, 2)}
+# #     return {"Forecast": round(weekly_fore cast, 2)}
 
 
 from fastapi import FastAPI
