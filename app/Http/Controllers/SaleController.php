@@ -11,8 +11,9 @@ use App\Models\StockMovement;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 // use Barryvdh\DomPDF\Facade\Pdf;
-use PDF; // add at the top
+ // add at the top
 
 class SaleController extends Controller
 {
@@ -29,61 +30,7 @@ class SaleController extends Controller
         return view('sales.create', compact('customers', 'products'));
     }
 
-    // public function store(Request $request)
-
-    // {
-    //     $validated = $request->validate([
-    //         'customer_id' => 'nullable|exists:customers,id',
-    //         'products.*.product_id' => 'required|exists:products,id',
-    //         'products.*.quantity' => 'required|integer|min:1',
-    //         'products.*.selling_price' => 'required|numeric|min:0',
-    //         'discount' => 'nullable|numeric|min:0',
-    //         'tax' => 'nullable|numeric|min:0',
-    //         'payment_method' => 'nullable|string|max:50',
-    //         'sale_date' => 'required|date',
-    //     ]);
-
-    //     DB::transaction(function () use ($validated) {
-    //         $totalAmount = collect($validated['products'])->sum(fn($p) => $p['selling_price'] * $p['quantity']);
-
-    //         $sale = Sale::create([
-    //             'customer_id' => $validated['customer_id'] ?? null,
-    //             'total_amount' => $totalAmount,
-    //             'discount' => $validated['discount'] ?? 0,
-    //             'tax' => $validated['tax'] ?? 0,
-    //             'payment_method' => $validated['payment_method'] ?? 'Cash',
-    //             'sale_date' => $validated['sale_date'],
-    //         ]);
-
-    //         foreach ($validated['products'] as $productData) {
-    //             SaleItem::create([
-    //                 'sale_id' => $sale->id,
-    //                 'product_id' => $productData['product_id'],
-    //                 'quantity' => $productData['quantity'],
-    //                 'selling_price' => $productData['selling_price'],
-    //                 'total' => $productData['quantity'] * $productData['selling_price'],
-    //             ]);
-
-    //             // Update stock
-    //             $product = Product::find($productData['product_id']);
-    //             if ($product->quantity < $productData['quantity']) {
-    //                 throw new \Exception("Insufficient stock for {$product->name}");
-    //             }
-    //             $product->decrement('quantity', $productData['quantity']);
-
-    //             // 🔥 Record stock movement (OUT)
-    //             StockMovement::create([
-    //                 'product_id' => $product->id,
-    //                 'type' => 'OUT',
-    //                 'quantity' => $productData['quantity'],
-    //                 'description' => "Sold via Sale ID {$sale->id}",
-    //                 'created_by' => Auth::id(),
-    //             ]);
-    //         }
-    //     });
-
-    //     return redirect()->route('sales.index')->with('success', 'Sale recorded successfully!');
-    // }
+  
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -153,38 +100,150 @@ class SaleController extends Controller
      * Download sales report as PDF
      */
     public function downloadReport(Request $request)
-    {
-        // Validate input for custom date range
-        $request->validate([
-            'from_date' => 'nullable|date',
-            'to_date'   => 'nullable|date|after_or_equal:from_date',
-            'type'      => 'nullable|string|in:daily,monthly,yearly,all',
-        ]);
+{
+    // Allowed types
+    $allowedTypes = ['all','daily','monthly','yearly','custom','customer','product'];
 
-        $query = Sale::with('customer', 'saleItems.product');
+    $request->validate([
+        'type' => 'nullable|string|in:' . implode(',', $allowedTypes),
+        'from_date' => 'nullable|date',
+        'to_date'   => 'nullable|date|after_or_equal:from_date',
+        'customer_name' => 'nullable|string|max:255',
+        'product_name'  => 'nullable|string|max:255',
+    ]);
 
-        // Filter by type
-        if ($request->type === 'daily') {
+    $query = Sale::with('customer', 'saleItems.product');
+
+    // Filter by type
+    switch ($request->type) {
+        case 'daily':
             $query->whereDate('sale_date', today());
-        } elseif ($request->type === 'monthly') {
+            break;
+        case 'monthly':
             $query->whereMonth('sale_date', now()->month)
-                ->whereYear('sale_date', now()->year);
-        } elseif ($request->type === 'yearly') {
+                  ->whereYear('sale_date', now()->year);
+            break;
+        case 'yearly':
             $query->whereYear('sale_date', now()->year);
-        }
+            break;
+        case 'custom':
+            if ($request->from_date && $request->to_date) {
+                $query->whereBetween('sale_date', [$request->from_date, $request->to_date]);
+            }
+            break;
+        case 'customer':
+            if ($request->customer_name) {
+                $query->whereHas('customer', function($q) use ($request) {
+                    $q->where('name', 'like', '%' . $request->customer_name . '%');
+                });
 
-        // Custom date range
+                // Optional date filter for customer
+                if ($request->from_date && $request->to_date) {
+                    $query->whereBetween('sale_date', [$request->from_date, $request->to_date]);
+                }
+            }
+            break;
+        case 'product':
+            if ($request->product_name) {
+                $query->whereHas('saleItems.product', function($q) use ($request) {
+                    $q->where('name', 'like', '%' . $request->product_name . '%');
+                });
+
+                // Optional date filter for product
+                if ($request->from_date && $request->to_date) {
+                    $query->whereBetween('sale_date', [$request->from_date, $request->to_date]);
+                }
+            }
+            break;
+        default:
+            // 'all' - optional date filter
+            if ($request->from_date && $request->to_date) {
+                $query->whereBetween('sale_date', [$request->from_date, $request->to_date]);
+            }
+            break;
+    }
+
+    $sales = $query->orderBy('sale_date', 'desc')->get();
+
+    $pdf = PDF::loadView('sales.report', compact('sales'))
+              ->setPaper('a4', 'landscape');
+
+    $filename = 'sales_report_' . now()->format('Y_m_d_H_i') . '.pdf';
+
+    return $pdf->download($filename);
+}
+
+     public function salesReport(Request $request)
+    {
+        $query = Sale::with('customer');
+
+        // Optional Date Range
         if ($request->from_date && $request->to_date) {
             $query->whereBetween('sale_date', [$request->from_date, $request->to_date]);
         }
 
         $sales = $query->orderBy('sale_date', 'desc')->get();
 
-        $pdf = PDF::loadView('sales.report', compact('sales'))
+        $pdf = Pdf::loadView('sales.report', compact('sales'))
             ->setPaper('a4', 'landscape');
 
-        $filename = 'sales_report_' . now()->format('Y_m_d_H_i') . '.pdf';
+        return $pdf->download('sales_report_' . now()->format('YmdHis') . '.pdf');
+    }
 
-        return $pdf->download($filename);
+    /**
+     * INVOICE BILL PDF
+     */
+    public function invoiceBill($saleId)
+    {
+        $sale = Sale::with(['items.product', 'customer'])->findOrFail($saleId);
+
+        $pdf = Pdf::loadView('sales.bill', compact('sale'))
+            ->setPaper('a4');
+
+        return $pdf->download('invoice_' . $sale->id . '.pdf');
+    }
+
+    /**
+     * SINGLE CUSTOMER REPORT
+     */
+    public function customerReport($customerId)
+    {
+        $customer = Customer::findOrFail($customerId);
+
+        $sales = Sale::where('customer_id', $customerId)
+            ->with('items.product')
+            ->orderBy('sale_date', 'desc')
+            ->get();
+
+        $pdf = Pdf::loadView('customers.customer_report', compact('customer', 'sales'))
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('customer_report_' . $customer->id . '.pdf');
+    }
+
+    /**
+     * ALL CUSTOMERS REPORT
+     */
+    public function allCustomersReport()
+    {
+        $customers = Customer::withCount('sales')->get();
+
+        $pdf = Pdf::loadView('customers.all_customers_report', compact('customers'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download('customers_report_' . now()->format('YmdHis') . '.pdf');
+    }
+
+    /**
+     * PRODUCT REPORT
+     */
+    public function productReport()
+    {
+        $products = Product::with('category')->get();
+
+        $pdf = Pdf::loadView('products.product_report', compact('products'))
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('product_report_' . now()->format('YmdHis') . '.pdf');
     }
 }
