@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('quantity')->default(0);
             $table->decimal('selling_price', 12, 2)->default(0);
             $table->decimal('total', 12, 2)->default(0);
+            $table->date('sale_date');
             $table->timestamps();
         });
     }

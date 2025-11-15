@@ -22,6 +22,7 @@ class SaleItemSeeder extends Seeder
                 'product_id' => $product->id,
                 'quantity' => rand(1, 5),
                 'selling_price' => $product->selling_price,
+                'sale_date' => $sale->sale_date,
             ]);
         }
     }

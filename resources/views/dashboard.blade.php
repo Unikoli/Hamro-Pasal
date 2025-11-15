@@ -201,34 +201,23 @@ new Chart(stockCtx, {
 
 // ===============================
 // FIXED: DAILY FORECAST (LINE)
-// ===============================
-    // --- DAILY FORECAST QUANTITY (LINE CHART) ---
-    const qtyCtx = document.getElementById('forecastQtyLine').getContext('2d');
-    new Chart(qtyCtx, {
-        type: 'line',
-        data: {
-            labels: forecastDates,
-            datasets: [{
-                label: 'Daily Forecast Quantity',
-                data: forecastQty,
-                borderColor: '#FFD700',
-                backgroundColor: 'rgba(255,215,0,0.25)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'top' },
-                tooltip: { mode: 'index', intersect: false }
-            },
-            scales: {
-                x: { title: { display: true, text: 'Date' } },
-                y: { title: { display: true, text: 'Quantity' }, beginAtZero: true }
-            }
-        }
-    });
+// =============================== 
+const forecastLineCtx = document.getElementById('forecastQtyLine').getContext('2d');
+new Chart(forecastLineCtx, {
+    type: 'line',
+    data: {
+        labels: forecastDates,
+        datasets: [{
+            label: "Daily Forecast Quantity",
+            data: forecastQty,
+            borderColor: "#FFD700",
+            backgroundColor: "rgba(255,215,0,0.25)",
+            fill: true,
+            tension: 0.4
+        }]
+    }
+});
+
 // ===============================
 // FIXED: DAILY FORECAST REVENUE
 // ===============================

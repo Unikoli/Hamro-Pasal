@@ -75,6 +75,7 @@ class SaleController extends Controller
                     'quantity' => $productData['quantity'],
                     'selling_price' => $productData['selling_price'],
                     'total' => $productData['quantity'] * $productData['selling_price'],
+                    'sale_date' => $validated['sale_date'],
                 ]);
 
                 $product = Product::find($productData['product_id']);
