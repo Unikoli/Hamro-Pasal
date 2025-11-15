@@ -100,8 +100,19 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/purchases/supplier/{supplier_id}', [PurchaseController::class, 'supplierHistory'])
         ->name('purchases.supplier.history');
 
+
     // ✅ Purchase Items Routes
-        Route::resource('purchase_items', PurchaseItemController::class);
+     Route::resource('purchase_items', PurchaseItemController::class);
+     // Sales
+Route::get('/reports/sales', [SaleController::class, 'salesReport'])->name('sales.report');
+Route::get('/reports/invoice/{id}', [SaleController::class, 'invoiceBill'])->name('sales.invoice');
+
+// Customers
+Route::get('/reports/customer/{id}', [SaleController::class, 'customerReport'])->name('sales.customer_report');
+Route::get('/reports/customers/all', [SaleController::class, 'allCustomersReport'])->name('sales.all_customers');
+
+// Products
+Route::get('/reports/products', [SaleController::class, 'productReport'])->name('sales.product_report');
 
     // customer routes
     Route::resource('customers', CustomerController::class);
