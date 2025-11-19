@@ -51,7 +51,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('sales', SaleController::class)->except(['show']);
     // Route::get('/sales/report/download', [SaleController::class, 'downloadReport'])->name('sales.report.download');
     Route::get('/sales/download-report', [SaleController::class, 'downloadReport'])
-     ->name('sales.downloadReport');
+        ->name('sales.downloadReport');
 
 
     // Notifications
@@ -102,26 +102,28 @@ Route::middleware(['auth'])->group(function () {
 
 
     // ✅ Purchase Items Routes
-     Route::resource('purchase_items', PurchaseItemController::class);
-     // Sales
-Route::get('/reports/sales', [SaleController::class, 'salesReport'])->name('sales.report');
-Route::get('/reports/invoice/{id}', [SaleController::class, 'invoiceBill'])->name('sales.invoice');
+    Route::resource('purchase_items', PurchaseItemController::class);
+    // Sales
+    Route::get('/reports/sales', [SaleController::class, 'salesReport'])->name('sales.report');
+    Route::get('/reports/invoice/{id}', [SaleController::class, 'invoiceBill'])->name('sales.invoice');
 
-// Customers
-Route::get('/reports/customer/{id}', [SaleController::class, 'customerReport'])->name('sales.customer_report');
-Route::get('/reports/customers/all', [SaleController::class, 'allCustomersReport'])->name('sales.all_customers');
+    // Customers
+    Route::get('/reports/customer/{id}', [SaleController::class, 'customerReport'])->name('sales.customer_report');
+    Route::get('/reports/customers/all', [SaleController::class, 'allCustomersReport'])->name('sales.all_customers');
 
-// Products
-Route::get('/reports/products', [SaleController::class, 'productReport'])->name('sales.product_report');
+    // Products
+    Route::get('/reports/products', [SaleController::class, 'productReport'])->name('sales.product_report');
 
     // customer routes
     Route::resource('customers', CustomerController::class);
 
     // stock movement routes
     Route::resource('stock-movements', StockMovementController::class);
-    Route::get('/stock-movements/download/pdf', 
-    [StockMovementController::class, 'downloadReport'])
-    ->name('stock_movement.report');
+    Route::get(
+        '/stock-movements/download/pdf',
+        [StockMovementController::class, 'downloadReport']
+    )
+        ->name('stock_movement.report');
 
 
 
